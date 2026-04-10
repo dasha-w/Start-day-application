@@ -1,4 +1,6 @@
 import requests
+
+from clothing_advice import display_clothing_advice
 from config import WEATHER_API_KEY
 from helpers import ask_repeat
 
@@ -10,9 +12,10 @@ WIND_DIR_MAP = {
     'SSW': 'South-southwestern','WSW': 'West-southwestern', 'WNW': 'West-northwestern', 'NNW': 'North-northwestern'
 }
 KEY_FILTERS_CURRENT_WEATHER = ['temp_c', 'condition', 'wind_kph', 'precip_mm', 'feelslike_c', "uv", "wind_dir",
-                               'last_updated']
+                               'last_updated'] #todo add snow if available? & to function
 KEY_FILTERS_FORECAST_WEATHER = ['maxtemp_c', 'avgtemp_c', 'mintemp_c', 'totalprecip_mm', 'daily_will_it_rain',
-                                'daily_chance_of_rain','condition', 'uv']
+                                'daily_chance_of_rain','condition', 'uv'] #todo add snow & to function
+
 
 #================ FUNCTIONS =====================
 def print_weather_menu():
@@ -34,7 +37,7 @@ def get_weather_in_city(city):
 
     API_KEY = WEATHER_API_KEY
 
-    url = "http://api.weatherapi.com/v1/forecast.json?"
+    url = "https://api.weatherapi.com/v1/forecast.json"
     params = {"key": API_KEY, "aqi": "no", "q":city}
 
     try:
@@ -79,11 +82,14 @@ def parse_weather_api(weather_data):
 #============= GET INPUT CITY AND CONFIRM CITY =============
 def get_city():
     """
-    Asks user for city name. Input cannot be empty
-    :return: string
+    Asks user for city name. Input cannot be empty. User can quit the search.
+    :return: string or None
     """
     while True:
-        city = input("Enter a city name to check the weather: ").strip()
+        city = input("Enter a city name to check the weather (q to quit): ").strip()
+
+        if city.lower() == 'q':
+            return None
 
         if not city:
             print("City name cannot be empty. Please enter a city name: ")
@@ -118,14 +124,23 @@ def check_city(weather_data):
 
 
 # ============ GET VALIDATED WEATHER DATA ==============
-def run_validate_weather_data():
+def run_validated_weather_data():
     """
     Handles iteration of getting weather data and validating
-    :return: bool - True if data found & city confirmed, False if not
-            & None or dict with weather data
+    :return:
+        1) None - if user quits city input
+           Bool - True - if data found & city confirmed
+                - False - if city rejected or no data found for city
+        2) None - if 1 is None or False
+           Dict - if 1 is True
     """
 
     city = get_city()
+
+    if city is None:
+        print("Quitting search for weather. Returning to menu.")
+        return None, None
+
     data = get_weather_in_city(city)
     parsed = parse_weather_api(data)
 
@@ -144,9 +159,9 @@ def run_validate_weather_data():
 
 def display_current_weather(weather):
     """
-
-    :param weather:
-    :return: print current weather
+    Extract current weather data and print.
+    :param weather: weather data dictionary for today and chosen city
+    :return: Print current weather
     """
     location = weather['location']
 
@@ -157,66 +172,85 @@ def display_current_weather(weather):
 
     print(f"\n----------------------\n"
           f"The current weather in {location['name']}, {location['country']} at {current_weather['last_updated'][11:]} is:\n"
-          f"Temperature: {current_weather['temp_c']}{chr(176)}C \n"
-          f"Perceived temperature: {current_weather['feelslike_c']}{chr(176)}C \n"
+          f"Temperature: {current_weather['temp_c']}{DEGREE_SYMBOL}C \n"
+          f"Perceived temperature: {current_weather['feelslike_c']}{DEGREE_SYMBOL}C \n"
           f"Precipitation: {current_weather['precip_mm']} mm\n"
           f"Wind: {current_weather['wind_kph']} kph in {current_weather['wind_dir']} direction\n"
           f"Condition: {current_weather['condition']}\n"
           f"")
 
 
-
-def current_weather_loop():
-    while True:
-        success, weather_data = run_validate_weather_data()
-
-        if not success: # loop back if no data of city rejected
-            continue
-
-        display_current_weather(weather_data)
-
-        if not ask_repeat("1. Get the current weather conditions"):
-            return
-
-
 #=============== WEATHER FORECAST TODAY ==============
 def display_forecast_weather(weather):
-    pass
+    """
+    Extract forecast weather data and print.
+    :param weather: weather data dictionary for today and chosen city
+    :return: Print forecast
+    """
+    location = weather['location']
+    date = weather['forecast']['forecastday'][0]['date']
+    forecast_today = weather['forecast']['forecastday'][0]['day']
+    forecast_weather = {key: forecast_today[key] for key in KEY_FILTERS_FORECAST_WEATHER}
+    forecast_weather['condition'] = forecast_weather['condition']['text']
 
+    print(f'\n\u001b[34;1mForecast for {location['name']} on {date}\u001b[0m'
+          f'\n--------------------------\n'
+          f'Temperature between: {forecast_weather['mintemp_c']}{DEGREE_SYMBOL}C '
+          f'- {forecast_weather['maxtemp_c']}{DEGREE_SYMBOL}C \n'
+          f'\u001b[1mAverage\u001b[0m temperature: {forecast_weather['avgtemp_c']}{DEGREE_SYMBOL}C\n'
+          f'UV index: {forecast_weather['uv']}\n'
+          f'Chance of rain: {forecast_weather['daily_chance_of_rain']}\n'
+          f'Total rain: {forecast_weather['totalprecip_mm']} mm\n'
+          f'Weather condition: {forecast_weather['condition']}\n')
 
-def forecast_weather_loop():
-    while True:
-        success, weather_data = run_validate_weather_data()
-
-        if not success:  # loop back if no data of city rejected
-            continue
-
-        display_forecast_weather(weather_data)
-
-        if not ask_repeat("2. Get the weather forecast for today"):
-            return
 
 #============= CLOTHING ADVICE ===================
-def display_clothing_advice(weather):
-    pass
 
 
-def clothing_advice_loop():
+# =========== DISPLAY LOOP ==================
+def display_loop(option):
+    """
+    Uses validated weather data to control loop. If checks (data found and user accepts city found and does not
+    quit) are passed, weather data is displayed according to 'option'
+    :param option: str 'current', 'forecast' or 'clothing' calls different display functions
+    :return: None
+    """
     while True:
-        success, weather_data = run_validate_weather_data()
+        success, weather_data = run_validated_weather_data()
 
-        if not success:  # loop back if no data of city rejected
+        if success is None: # User chose 'q' when searching for city - break loop
+            break
+
+        if not success: # No data of city found or used rejects found city - restart loop
             continue
 
-        display_clothing_advice(weather_data)
+        match option:
+            case 'current':
+                display_current_weather(weather_data)
+                if not ask_repeat("1. Get the current weather conditions"):
+                    return
 
-        if not ask_repeat("3. Get clothing advice for today's weather forecast"):
-            return
+            case 'forecast':
+                display_forecast_weather(weather_data)
+                if not ask_repeat("2. Get the weather forecast for today"):
+                    return
 
+            case 'clothing':
+                display_clothing_advice(weather_data)
+                if not ask_repeat("3. Get clothing advice for today's weather forecast"):
+                    return
+
+            case _:
+                print("Action parameter not properly defined. Should be 'current', 'forecast', or 'clothing'")
+                break
 
 
 # =================== WEATHER SUBMENU LOOP ==================
 def weather_loop():
+    """
+    function controls loop over submenu weather and calls functions for different options.
+    :return: None
+    """
     while True:
         print_weather_menu()
 
@@ -225,13 +259,13 @@ def weather_loop():
 
             match choose_weather:
                 case 1:
-                    current_weather_loop()
+                    display_loop('current')
 
                 case 2:
-                    forecast_weather_loop()
+                    display_loop('forecast')
 
                 case 3:
-                    clothing_advice_loop()
+                    display_loop('clothing')
 
                 case 4:
                     return
@@ -246,4 +280,6 @@ def weather_loop():
             print(f"\033[31mInvalid input\033[0m - error: {e} \nPlease enter a digit.\n")
 
 
-weather_loop()
+
+#todo change date format
+# todo current and forecast in pretty table
