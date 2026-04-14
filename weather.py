@@ -1,8 +1,8 @@
 import requests
-
 from clothing_advice import display_clothing_advice
 from config import WEATHER_API_KEY
-from helpers import ask_repeat
+from helpers import ask_repeat, parse_date, DEGREE_SYMBOL
+from prettytable import PrettyTable, TableStyle
 
 ## ================= VARIABLES =====================
 WIND_DIR_MAP = {
@@ -11,10 +11,6 @@ WIND_DIR_MAP = {
     'NNE': 'North-northeastern','ENE': 'East-northeastern', 'ESE': 'East-southeastern', 'SSE': 'South-southeastern',
     'SSW': 'South-southwestern','WSW': 'West-southwestern', 'WNW': 'West-northwestern', 'NNW': 'North-northwestern'
 }
-KEY_FILTERS_CURRENT_WEATHER = ['temp_c', 'condition', 'wind_kph', 'precip_mm', 'feelslike_c', "uv", "wind_dir",
-                               'last_updated'] #todo add snow if available? & to function
-KEY_FILTERS_FORECAST_WEATHER = ['maxtemp_c', 'avgtemp_c', 'mintemp_c', 'totalprecip_mm', 'daily_will_it_rain',
-                                'daily_chance_of_rain','condition', 'uv'] #todo add snow & to function
 
 
 #================ FUNCTIONS =====================
@@ -157,54 +153,129 @@ def run_validated_weather_data():
 
 #============= CURRENT WEATHER =======================
 
-def display_current_weather(weather):
+def get_current_weather(weather:dict)->dict:
+
+    current_dict = {}
+
+    current_dict['location'] = weather['location']['name']
+    current_dict['date'] = parse_date(weather['forecast']['forecastday'][0]['date'])
+
+    #parse current weather
+    weather_current = weather['current']
+    # time
+    current_dict['time'] = weather_current['last_updated'][11:]
+
+    #temp
+    current_dict['temp'] = f'{weather_current['temp_c']}{DEGREE_SYMBOL}C'
+    current_dict['feels_temp'] = f'{weather_current['feelslike_c']}{DEGREE_SYMBOL}C'
+
+    # rain
+    current_dict['rain'] = f'{weather_current['precip_mm']} mm'
+
+    # wind
+    current_dict['wind_kph'] = f'{weather_current['wind_kph']} kph'
+    current_dict['wind_dir'] = WIND_DIR_MAP.get(weather_current['wind_dir'], weather_current['wind_dir']) #fallback
+
+    # UV & condition
+    current_dict['uv'] = weather_current['uv']
+    current_dict['condition'] = weather_current['condition']['text']
+
+    return current_dict
+
+
+def display_current_weather(current: dict):
     """
     Extract current weather data and print.
     :param weather: weather data dictionary for today and chosen city
     :return: Print current weather
     """
-    location = weather['location']
+    print(f'\n\u001b[34;1mThe current weather in {current['location']} at {current['time']} \u001b[0m')
 
-    #---- EXTRACT CURRENT WEATHER ----
-    current_weather = {key: weather['current'][key] for key in KEY_FILTERS_CURRENT_WEATHER}
-    current_weather['condition'] = current_weather['condition']['text']
-    current_weather['wind_dir'] = WIND_DIR_MAP.get(current_weather['wind_dir'], current_weather['wind_dir']) #fallback
-
-    print(f"\n----------------------\n"
-          f"The current weather in {location['name']}, {location['country']} at {current_weather['last_updated'][11:]} is:\n"
-          f"Temperature: {current_weather['temp_c']}{DEGREE_SYMBOL}C \n"
-          f"Perceived temperature: {current_weather['feelslike_c']}{DEGREE_SYMBOL}C \n"
-          f"Precipitation: {current_weather['precip_mm']} mm\n"
-          f"Wind: {current_weather['wind_kph']} kph in {current_weather['wind_dir']} direction\n"
-          f"Condition: {current_weather['condition']}\n"
-          f"")
+    table = PrettyTable()
+    table.align = 'l'
+    table.header = False
+    table.border = True
+    table.padding_width = 2
+    table.add_rows(
+        [
+            ["Temperature:", current['temp']],
+            ["Perceived temperature:", current['feels_temp']],
+            ["Precipitation:",  current['rain']],
+            ["Wind:", f'{current['wind_kph']} in {current['wind_dir']} direction'],
+            ["UV index:", current['uv']],
+            ["Condition:", current['condition']]
+        ]
+    )
+    print(table)
 
 
 #=============== WEATHER FORECAST TODAY ==============
-def display_forecast_weather(weather):
+def get_forecast_weather(weather: dict)-> dict:
     """
-    Extract forecast weather data and print.
-    :param weather: weather data dictionary for today and chosen city
-    :return: Print forecast
+    Extract relevant weather data into dict for printing function
+    :param weather: dict
+    :return: smaller dict
     """
-    location = weather['location']
-    date = weather['forecast']['forecastday'][0]['date']
-    forecast_today = weather['forecast']['forecastday'][0]['day']
-    forecast_weather = {key: forecast_today[key] for key in KEY_FILTERS_FORECAST_WEATHER}
-    forecast_weather['condition'] = forecast_weather['condition']['text']
+    forecast = {}
 
-    print(f'\n\u001b[34;1mForecast for {location['name']} on {date}\u001b[0m'
-          f'\n--------------------------\n'
-          f'Temperature between: {forecast_weather['mintemp_c']}{DEGREE_SYMBOL}C '
-          f'- {forecast_weather['maxtemp_c']}{DEGREE_SYMBOL}C \n'
-          f'\u001b[1mAverage\u001b[0m temperature: {forecast_weather['avgtemp_c']}{DEGREE_SYMBOL}C\n'
-          f'UV index: {forecast_weather['uv']}\n'
-          f'Chance of rain: {forecast_weather['daily_chance_of_rain']}\n'
-          f'Total rain: {forecast_weather['totalprecip_mm']} mm\n'
-          f'Weather condition: {forecast_weather['condition']}\n')
+    forecast['location'] = weather['location']['name']
+    forecast['date'] = parse_date(weather['forecast']['forecastday'][0]['date'])
+
+    # parse forecast for today
+    weather_forecast = weather['forecast']['forecastday'][0]['day']
+
+    #temp
+    forecast['min_temp'] = f'{weather_forecast['mintemp_c']}{DEGREE_SYMBOL}C'
+    forecast['max_temp'] = f'{weather_forecast['maxtemp_c']}{DEGREE_SYMBOL}C'
+    forecast['avg_temp'] = f'{weather_forecast['avgtemp_c']}{DEGREE_SYMBOL}C'
+
+    # rain
+    forecast['rain_chance'] = f'{weather_forecast['daily_chance_of_rain']} %'
+    forecast['rain_mm'] = f'{weather_forecast['totalprecip_mm']} mm'
+
+    # snow
+    snow = weather_forecast['daily_will_it_snow']
+    if snow == 1: # if it will snow
+        forecast['snow_chance'] = f'{weather_forecast['daily_chance_of_snow']} %'
+        forecast['snow_cm'] = f'{weather_forecast['totalsnow_cm']} cm'
+
+    # UV & condition
+    forecast['uv'] = weather_forecast['uv']
+    forecast['condition'] = weather_forecast['condition']['text']
+
+    return forecast
 
 
-#============= CLOTHING ADVICE ===================
+def display_forecast_weather(forecast:dict):
+
+    print(f'\n\u001b[34;1mForecast for {forecast['location']} on {forecast['date']}\u001b[0m')
+
+    table = PrettyTable()
+    table.align = 'l'
+    table.header = False
+    table.border = True
+    table.padding_width = 2
+    table.add_rows(
+        [
+            ["Temperature between:", f'{forecast['min_temp']} - {forecast['max_temp']}'],
+            ["Average temperature:", forecast['avg_temp']],
+            ["Chance of rain:", forecast['rain_chance']],
+            ["Total rain:", forecast['rain_mm']],
+            ["UV index:", forecast['uv']],
+            ["Condition:", forecast['condition']]
+        ]
+    )
+
+    # Add snow to table if there is snow
+    if 'snow_chance' in forecast:
+        table.add_rows(
+            [
+                ["Chance of snow:", forecast['snow_chance']],
+                ["Total snow:", forecast['snow_cm']]
+            ]
+        )
+
+    print(table)
 
 
 # =========== DISPLAY LOOP ==================
@@ -226,12 +297,14 @@ def display_loop(option):
 
         match option:
             case 'current':
-                display_current_weather(weather_data)
+                current = get_current_weather(weather_data)
+                display_current_weather(current)
                 if not ask_repeat("1. Get the current weather conditions"):
                     return
 
             case 'forecast':
-                display_forecast_weather(weather_data)
+                forecast = get_forecast_weather(weather_data)
+                display_forecast_weather(forecast)
                 if not ask_repeat("2. Get the weather forecast for today"):
                     return
 
@@ -280,6 +353,3 @@ def weather_loop():
             print(f"\033[31mInvalid input\033[0m - error: {e} \nPlease enter a digit.\n")
 
 
-
-#todo change date format
-# todo current and forecast in pretty table

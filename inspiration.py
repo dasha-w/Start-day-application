@@ -1,16 +1,16 @@
 import requests
-from helpers import ask_repeat
+from helpers import ask_repeat, SEPERATOR_BIG, SEPERATOR_SMALL
 from search_advice import advice_search_loop
 
 
 def print_inspiration_menu():
-    print(f"These are your options: \n"
-          f"---------------------------\n"
-          f'1. Hear a ("good") joke\n'
+    print(f"{SEPERATOR_BIG}\nThese are your options: \n"
+          f"{SEPERATOR_SMALL}\n"
+          f'\u001b[93m1. Hear a ("good") joke\n'
           f"2. Get a famous quote\n"
           f"3. Get some advice\n"
           f"4. Search advice by a keyword\n"
-          f"5. Back\n")
+          f"5. Back\u001b[0m\n")
 
 #--------------------- FALLBACK ----------------------
 def fall_back(categorie):
@@ -102,7 +102,7 @@ def get_quote():
 
     except requests.exceptions.RequestException as e:
         print(f'Error {e}')
-        return None  # todo klopt dat? idem get_advice()
+        return None
 
 
 def display_quote(quote_data):
@@ -177,30 +177,37 @@ def inspiration_loop():
         try:
             choose_inspiration = int(input("Please choose an option: "))
 
+            action_completed = False
+
             match choose_inspiration:
                 case 1:
                     joke = get_joke()
                     display_joke(joke)
+                    action_completed = True
 
                 case 2:
                     quote = get_quote()
                     display_quote(quote)
+                    action_completed = True
 
                 case 3:
                     advice = get_advice()
                     display_advice(advice)
+                    action_completed = True
 
                 case 4:
                     advice_search_loop()
+                    action_completed = True
 
                 case 5:
                     return
 
                 case _:
-                    print(f'\033[31mInvalid choice.\033[0m Please choose between options 1 - 4. ')
+                    print(f'\033[31mInvalid choice.\033[0m \nPlease choose between options 1 - 5. ')
 
-            if not ask_repeat("1. Get some inspiration to start your day"): # end menu cycle - ask if want to repeat
-                return
+            if action_completed: # end menu cycle & action 1-4 done -- ask if user wants to repeat
+                if not ask_repeat("1. Get some inspiration to start your day"):
+                    return
 
         except ValueError as e:
             print(f"\033[31mInvalid input\033[0m - error: {e} \nPlease enter a digit.\n")

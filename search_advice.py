@@ -75,7 +75,7 @@ def choose_advice(total_count):
                 print(f'\nPlease enter a number between 1 and {total_count}')
 
         except ValueError:
-            print('\nInvalid input. Please enter a whole number.')
+            print('\nInvalid input. \nPlease enter a whole number.')
 
 
 #--------------------- DISPLAY CHOSEN ADVICE  ----------------------
