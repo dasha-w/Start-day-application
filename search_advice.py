@@ -1,5 +1,8 @@
 import requests
-from helpers import ask_repeat
+from colorama import Fore, Style
+
+from helpers import ask_repeat, SEPERATOR_BIG, SEPERATOR_SMALL
+
 
 #--------------------- SEARCH ADVICE ----------------------
 def search_advice(keyword):
@@ -16,11 +19,11 @@ def search_advice(keyword):
         if response.status_code == 200:
             return response.json()
         else:
-            print(f'Something went wrong. Status code: {response.status_code}')
+            print(f'{Fore.RED}Something went wrong.{Fore.RESET} Status code: {response.status_code}')
             return None
 
     except requests.exceptions.RequestException as e:
-        print(f'Error {e}')
+        print(f'{Fore.RED}Error {e}')
         return None
 
 
@@ -53,7 +56,7 @@ def display_number_results(count):
     display the number of advice slips found with the keyword
     :return: print statement
     """
-    print(f'\nFound {count} advice slips. ')
+    print(f'\nFound {count} advice slip(s). ')
 
 
 def choose_advice(total_count):
@@ -66,7 +69,8 @@ def choose_advice(total_count):
 
     while True:
         try:
-            choice = int(input(f'\nChoose a number between 1 - {total_count} to display a found advice slip: '))
+            choice = int(input(f'{SEPERATOR_SMALL}\n'
+                               f'Choose a number between 1 - {total_count} to display a found advice slip: '))
 
             #Check if within range
             if 1 <= choice <= total_count:
@@ -75,7 +79,7 @@ def choose_advice(total_count):
                 print(f'\nPlease enter a number between 1 and {total_count}')
 
         except ValueError:
-            print('\nInvalid input. \nPlease enter a whole number.')
+            print(f'\n{Fore.RED}Invalid input.{Fore.RESET} \nPlease enter a whole number.')
 
 
 #--------------------- DISPLAY CHOSEN ADVICE  ----------------------
@@ -88,11 +92,12 @@ def display_chosen_advice(data, index):
     """
     try:
         advice = data[index]['advice']
-        print(f'\n------------------------\n'
-              f'Your advice for today is:\n"{advice}"')
+        print(f'\n{SEPERATOR_BIG}\n'
+              f'Your advice for today is:\n'
+              f'{SEPERATOR_SMALL}\n"{advice}"')
 
     except (KeyError, TypeError) as e:
-        print(f'Unexpected response format. Error: {e}')
+        print(f'Unexpected response format. {Fore.RED}Error: {e}')
 
 
 def browse_slips(slips):
@@ -114,7 +119,7 @@ def browse_slips(slips):
         display_chosen_advice(slips, chosen)
 
         while True:
-            again = input(f"\nWould you like to see another slip of the {total_count} found? (y/n): ").lower().strip()
+            again = input(f"\n{Fore.YELLOW}{Style.BRIGHT}Would you like to see another advice slip of the {total_count} found? (y/n): ").lower().strip()
             if again in ['y', 'yes']:
                 break
             elif again in ['n', 'no']:
@@ -134,13 +139,16 @@ def run_advice_search():
 
        :return:
        """
-    print("\n ----- Search for Advice -----\n")
-    keyword = input("You are about to search for advice based on a keyword (e.g. 'life', 'happiness').\n"
-                    "What keyword do you want to search for?: ").lower()
+    print(f"\n===== SEARCH for ADVICE =====\n")
+    keyword = input(f"You are about to search for advice based on a keyword (e.g. 'life', 'happiness').\n{SEPERATOR_SMALL}\n"
+                    "What keyword do you want to search for? (q to quit search): ").lower()
 
     if not keyword:
-        print("Keyword cannot be empty.")
-        return
+        print(f"\n{Fore.RED}Keyword cannot be empty.{Fore.RESET}\n{SEPERATOR_SMALL}")
+        return False
+
+    if keyword == 'q':
+        return True
 
     # get api data
     api_data = search_advice(keyword)
@@ -150,8 +158,8 @@ def run_advice_search():
 
     # If no advice found with keyword
     if not parsed['found']:  # if not False = True | If not True = False
-        print(f'No advice found: {parsed['error']}')
-        return
+        print(f'\n{Fore.RED}No advice found:{Fore.RESET} {parsed['error']}\n')
+        return False
 
     # if there is advice found for the keyword
     slips = parsed['slips']
@@ -161,6 +169,7 @@ def run_advice_search():
 
     # Show slips
     browse_slips(slips)
+    return True
 
 
 def advice_search_loop():
@@ -169,8 +178,9 @@ def advice_search_loop():
     :return:
     """
     while True:
-        run_advice_search()
+        search_completed = run_advice_search()
 
-        if not ask_repeat("4. Search advice by a keyword"):
-            return
+        if search_completed:
+            if not ask_repeat("4. Search advice by a keyword"):
+                return
 

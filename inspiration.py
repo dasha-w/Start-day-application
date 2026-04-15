@@ -1,4 +1,6 @@
 import requests
+from colorama import Fore, Style
+
 from helpers import ask_repeat, SEPERATOR_BIG, SEPERATOR_SMALL
 from search_advice import advice_search_loop
 
@@ -6,11 +8,11 @@ from search_advice import advice_search_loop
 def print_inspiration_menu():
     print(f"{SEPERATOR_BIG}\nThese are your options: \n"
           f"{SEPERATOR_SMALL}\n"
-          f'\u001b[93m1. Hear a ("good") joke\n'
+          f'{Fore.YELLOW}{Style.BRIGHT}1. Hear a ("good") joke\n'
           f"2. Get a famous quote\n"
-          f"3. Get some advice\n"
+          f"3. Get random advice slip\n"
           f"4. Search advice by a keyword\n"
-          f"5. Back\u001b[0m\n")
+          f"5. Back\n")
 
 #--------------------- FALLBACK ----------------------
 def fall_back(categorie):
@@ -35,9 +37,10 @@ def fall_back(categorie):
     if categorie == 'joke':
         print_text = fall_back_joke
 
-    print(f'Printing fallback {categorie}.\n'
-          f'-------------------------\n'
+    print(f'{SEPERATOR_BIG}\n'
+          f'Printing fallback {categorie}.\n'
           f'Your {categorie} for today is:\n'
+          f'{SEPERATOR_SMALL}\n'
           f'{print_text}')
 
 
@@ -73,8 +76,9 @@ def display_joke(joke_data):
     try:
         setup = joke_data["setup"]
         punchline = joke_data["punchline"]
-        print(f'------------------------\n'
+        print(f'{SEPERATOR_BIG}\n'
               f'Your joke for today is:\n'
+              f'{SEPERATOR_SMALL}\n'
               f'{setup}\n'
               f'\n'
               f'{punchline}')
@@ -119,8 +123,9 @@ def display_quote(quote_data):
     try:
         quote_str = quote_data[0]["q"]
         author = quote_data[0]["a"]
-        print(f'------------------------\n'
+        print(f'{SEPERATOR_BIG}\n'
               f'Your quote for today is:\n'
+              f'{SEPERATOR_SMALL}\n'
               f'"{quote_str}"\n'
               f'- {author}')
 
@@ -161,8 +166,10 @@ def display_advice(advice_data):
 
     try:
         new_advice = advice_data['slip']['advice']
-        print(f'------------------------\n'
-              f'Your advice for today is:\n"{new_advice}"')
+        print(f'{SEPERATOR_BIG}\n'
+              f'Your advice for today is:\n'
+              f'{SEPERATOR_SMALL}\n'
+              f'"{new_advice}"')
 
     except (KeyError, TypeError) as e:
         print(f'Unexpected response format. Error: {e}')
@@ -203,12 +210,12 @@ def inspiration_loop():
                     return
 
                 case _:
-                    print(f'\033[31mInvalid choice.\033[0m \nPlease choose between options 1 - 5. ')
+                    print(f'{Fore.RED}Invalid choice.{Fore.RESET} \nPlease choose between options 1 - 5. \n')
 
             if action_completed: # end menu cycle & action 1-4 done -- ask if user wants to repeat
                 if not ask_repeat("1. Get some inspiration to start your day"):
                     return
 
         except ValueError as e:
-            print(f"\033[31mInvalid input\033[0m - error: {e} \nPlease enter a digit.\n")
+            print(f"{Fore.RED}Invalid input{Fore.RESET} -- Error: {e}\n \n{Style.BRIGHT}Please enter a digit.\n")
 

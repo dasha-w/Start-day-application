@@ -1,6 +1,8 @@
 from collections import Counter
 
-from helpers import parse_date, DEGREE_SYMBOL
+from colorama import Fore, Style
+
+from helpers import parse_date, DEGREE_SYMBOL, SEPERATOR_SMALL
 
 #========= VARIABLES ============
 KEY_FILTERS_CLOTHING_WEATHER = ['temp_c', 'condition', 'wind_kph', 'precip_mm', 'feelslike_c', 'will_it_rain',
@@ -44,7 +46,7 @@ def get_forecast_descriptives(filtered_hourly: list[dict[str, str|float|int]]):
     descriptives['most_common_condition'] = count_conditions.most_common(1)[0][0] # if multiple have highest count first in alphabet is returned
 
     # Rain
-    descriptives['tot_precip'] = sum(hour['precip_mm'] for hour in filtered_hourly)
+    descriptives['tot_precip'] = round(sum(hour['precip_mm'] for hour in filtered_hourly)) #krijg to echt float met veel achter komma zonder round()
     descriptives['avg_chance_rain'] = round(sum(hour['chance_of_rain'] for hour in filtered_hourly) / len(filtered_hourly))
     descriptives['will_it_rain'] = True if sum(hour['will_it_rain'] for hour in filtered_hourly) > 0 else False
 
@@ -61,29 +63,34 @@ def generate_clothing_advice(descriptives: dict) -> dict:
     #temperature
     avg_temp = descriptives['feel_avg_temp']
     if avg_temp <= TEMP_THRESHOLD['cold']:
-        advice['temp'] = "It's going to feel cold today. Bundle up!\nWear warm layers, a thick coat, hat and scarf."
+        advice['temp'] = (f"It's going to feel {Fore.BLUE}cold{Style.RESET_ALL} today. Bundle up!\n"
+                          ">    Wear warm layers, a thick coat, hat and scarf.")
     elif avg_temp <= TEMP_THRESHOLD['chilly']:
-        advice['temp'] = ("It's going to feel chilly today. Dress warmly.\n"
-                          "Wear a warm coat or a sweater and light jacket. Consider bringing a scarf.")
+        advice['temp'] = (f"It's going to feel {Fore.BLUE}chilly{Style.RESET_ALL} today. Dress warmly.\n"
+                          ">    Wear a warm coat or a sweater and light jacket. Consider bringing a scarf.")
     elif avg_temp <= TEMP_THRESHOLD['mild']:
-        advice['temp'] = "It's going to feel mild today.\nWear layers and consider a transitional jacket."
+        advice['temp'] = (f"It's going to feel {Fore.BLUE}mild{Style.RESET_ALL} today.\n"
+                          ">    Wear layers and consider a transitional jacket.")
     elif avg_temp <= TEMP_THRESHOLD['mild/warm']:  # 15-20
-        advice['temp'] = ("It's going to feel mild/ warm today. Layering is advisable.\n"
-                          "Depending on personal preference and other weather factors, you can wear short- or longsleeve clothing.")
+        advice['temp'] = (f"It's going to feel {Fore.BLUE}mild/ warm{Style.RESET_ALL} today. Layering is advisable.\n"
+                          ">    Depending on personal preference and other weather factors, you can wear short- or longsleeve clothing.")
     elif avg_temp <= TEMP_THRESHOLD['warm']:
-        advice['temp'] ="It's going to feel warm today.\nT-shirt weather! Wear light clothing."
+        advice['temp'] = (f"It's going to feel {Fore.BLUE}warm{Style.RESET_ALL} today.\n"
+                          f">   T-shirt weather! Wear light clothing.")
     else:  # >25C
-        advice['temp'] = "It's going to feel hot today!\nWear breathable clothing and seek out shade."
+        advice['temp'] = (f"It's going to feel {Fore.BLUE}hot{Style.RESET_ALL} today!\n"
+                          f">   Wear breathable clothing and seek out shade.")
 
 
     # temperature range
     temp_range = descriptives['temp_range']
     if temp_range > TEMP_RANGE_THRESHOLD['high']:
-        advice['range'] = f'There will be a big temperature range today (range: {temp_range}{DEGREE_SYMBOL}C). Layering is key!\n'
+        advice['range'] = (f'There will be a {Fore.BLUE}big temperature{Fore.RESET} range today (range: {temp_range}{DEGREE_SYMBOL}C). \n'
+                           f'>   Layering is key!\n')
     elif temp_range > TEMP_RANGE_THRESHOLD['medium']:
-        advice['range'] = f"Expect some temperature variation today (range: {temp_range}{DEGREE_SYMBOL}C).\n"
+        advice['range'] = f"Expect {Fore.BLUE}some temperature{Fore.RESET} variation today (range: {temp_range}{DEGREE_SYMBOL}C).\n"
     else:
-        advice['range'] = "Temperature will be fairly consistent throughout the day.\n"
+        advice['range'] = f"Temperature will be {Fore.BLUE}fairly consistent{Fore.RESET} throughout the day.\n"
 
 
     # advice when rain
@@ -92,54 +99,58 @@ def generate_clothing_advice(descriptives: dict) -> dict:
 
     if not descriptives['will_it_rain']:
         if rain_chance > RAIN_CHANCE_THRESHOLD: #if 10, chance of rain higher than 10%
-            advice['rain'] = (f'It should not rain today. Although there is a {rain_chance}% '
-                              f'chance of rain.\nPack a lightweight raincoat just in case.')
+            advice['rain'] = (f'It should {Fore.BLUE}not rain{Fore.RESET} today. Although there is a {rain_chance}% '
+                              f'chance of rain.\n'
+                              f'>   Pack a lightweight raincoat just in case.')
         else:
-            advice['rain'] = 'It should not rain today.'
+            advice['rain'] = f'It should {Fore.BLUE}not rain{Fore.RESET} today.'
     elif descriptives['will_it_rain']:
         if rain_tot < RAIN_MM_THRESHOLD:
-            advice['rain'] = (f'There will be some rain today, but if timed correctly you should stay dry.\n'
-                              f'    The chance of rain is {rain_chance}% with a total of '
-                              f'{rain_tot} mm rain forecast.')
+            advice['rain'] = (f'There will be {Fore.BLUE}some rain{Fore.RESET} today.\n'
+                              f'The chance of rain is {rain_chance}% with a total of {rain_tot} mm rain forecast.\n'
+                              f'>   If timed correctly you should stay dry today.')
         else: #if will_it_rain is True and more than RAIN_MM_THRESHOLD rain is predicted
-            advice['rain'] = (f'Consider carrying an umbrella - it will rain today. The chance of rain is '
-                          f'{rain_chance}% with a total of {rain_tot} mm rain forecast.')
+            advice['rain'] = (f'It {Fore.BLUE}will rain{Fore.RESET} today. The chance of rain is {rain_chance}% '
+                              f'with a total of {rain_tot} mm rain forecast.\n'
+                              f'>   Consider carrying an umbrella. ')
 
     # advice snow
     if descriptives['will_it_snow']:
-        advice['snow'] = ("It's going to snow today! Make sure your outer layers are warm and waterproof and "
-                          "definitely bring gloves.")
+        advice['snow'] = (f"It's going to {Fore.BLUE}snow{Fore.RESET} today! \n"
+                          f">   Make sure your outer layers are warm and waterproof and definitely bring gloves.")
 
     # advice wind
     avg_wind = descriptives['avg_wind']
     if avg_wind > WIND_THRESHOLD['windy']:
-        advice['wind'] = f"It's going to be windy today with {avg_wind}kph winds. A windbreaker might come in handy."
+        advice['wind'] = (f"It's going to be {Fore.BLUE}windy{Fore.RESET} today with {avg_wind}kph winds. \n"
+                          f">   A windbreaker might come in handy.")
     elif avg_wind > WIND_THRESHOLD['strong_wind']:
-        advice['wind'] = f"There wil be strong winds of {avg_wind} kph. Wear a windbreaker and be careful outside!"
+        advice['wind'] = (f"There wil be {Fore.BLUE}strong winds{Fore.RESET} of {avg_wind} kph. \n"
+                          f">   Wear a windbreaker and be careful outside!")
 
     # advice UV
     uv_index = descriptives['max_uv']
-    start_advice = f"The max UV-index will be {uv_index}.\n"
-    if uv_index > UV_THRESHOLD['medium']:
-        advice['uv'] = start_advice + f'    Apply sunscreen before going outside.'
-    elif uv_index > UV_THRESHOLD['high']:
-        advice['uv'] = start_advice + f"    Protect your skin with sunscreen and a hat! The sun is fierce today with an max UV-index of {uv_index}"
-
+    start_advice = f"The max {Fore.BLUE}UV-index{Fore.RESET} will be {uv_index}.\n"
+    if uv_index > UV_THRESHOLD['high']:
+        advice['uv'] = start_advice + f">   Protect your skin with sunscreen and a hat! The sun is fierce today!"
+    elif uv_index > UV_THRESHOLD['medium']:
+        advice['uv'] = start_advice + f'>   Apply sunscreen before going outside.'
     return advice
 
 
 def print_clothing_advice(location:str, date:str, descriptives:dict, advice:dict):
 
-    print(f'This clothing advice is based on the forecast for {location} on {date} '
-          f'between 8am and 8pm:\n'
-          f'-----------------------------------\n ')
+    print(f'\n{Fore.BLUE}This clothing advice is based on the forecast for {location} on {date} '
+          f'between 8am and 8pm:\n{Fore.RESET}'
+          f'{SEPERATOR_SMALL} ')
     # advice temp
-    print(f"The average 'feel-like' temperature (accounting for humidity and windchill) today "
-          f"will be {descriptives['feel_avg_temp']}{DEGREE_SYMBOL}C")
-    print(advice['temp'])
-    print(f'    {advice['range']}')
+    print(f"The average {Fore.BLUE}temperature{Fore.RESET} will {Style.BRIGHT}feel like{Style.RESET_ALL} "
+          f"{descriptives['feel_avg_temp']}{DEGREE_SYMBOL}C")
 
-    if 'rain' in advice:
+    print(advice['temp'])
+    print(f'{advice['range']}')
+
+    if 'rain' in advice: #TODO er is altijd rain in advice ?! check en beslis
         print(advice['rain'])
 
     if 'snow' in advice:

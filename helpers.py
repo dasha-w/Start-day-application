@@ -1,8 +1,9 @@
 import datetime as dt
+from colorama import Fore, Style
 
 DEGREE_SYMBOL = chr(176)
-SEPERATOR_BIG = ('='*60)
-SEPERATOR_SMALL = ('-'*60)
+SEPERATOR_BIG = ('='*80)
+SEPERATOR_SMALL = ('-'*80)
 
 
 def ask_repeat(prompt = ""):
@@ -13,13 +14,13 @@ def ask_repeat(prompt = ""):
     """
 
     while True:
-        again = input(f"\n\u001b[34mDo you want to repeat the action: \033[4m{prompt}\033[0m? (y/n): \u001b[0m")
+        again = input(f"\nDo you want to repeat the action: {Fore.BLUE}{prompt}{Fore.RESET}? (y/n): ").strip().lower()
         if again in ['y', 'yes']:
             return True
         elif again in ['n', 'no']:
             return False
         else:
-            print("\nInvalid input. Please enter 'y' or 'n'.")
+            print(f"\n{Fore.RED}Invalid input.{Fore.RESET} Please enter 'y' or 'n'.")
 
 
 def parse_date(date: str):
@@ -32,6 +33,6 @@ def parse_date(date: str):
         return date_format
 
     except (TypeError, ValueError) as e:
-        print(f'Wrong input when parsing date. Error: {e}\nUsing original date format.')
+        print(f'Wrong input when parsing date. {Fore.RED}Error:{Fore.RESET} {e}\nUsing original date format.')
         return date
 

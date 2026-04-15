@@ -1,7 +1,9 @@
 import requests
+from colorama import Fore, Style
+
 from clothing_advice import display_clothing_advice
 from config import WEATHER_API_KEY
-from helpers import ask_repeat, parse_date, DEGREE_SYMBOL
+from helpers import ask_repeat, parse_date, DEGREE_SYMBOL, SEPERATOR_BIG, SEPERATOR_SMALL
 from prettytable import PrettyTable, TableStyle
 
 ## ================= VARIABLES =====================
@@ -15,9 +17,9 @@ WIND_DIR_MAP = {
 
 #================ FUNCTIONS =====================
 def print_weather_menu():
-    print(f"These are your options: \n"
-          f"---------------------------\n"
-          f'1. Get the current weather conditions\n'
+    print(f"\n{SEPERATOR_BIG}\nThese are your options: \n"
+          f"{SEPERATOR_SMALL}\n"
+          f'{Fore.BLUE}{Style.BRIGHT}1. Get the current weather conditions\n'
           f"2. Get the weather forecast for today\n"
           f"3. Get clothing advice for today's weather forecast\n"
           f"4. Back\n")
@@ -82,13 +84,13 @@ def get_city():
     :return: string or None
     """
     while True:
-        city = input("Enter a city name to check the weather (q to quit): ").strip()
+        city = input(f"{SEPERATOR_SMALL}\nEnter a city name to check the weather (q to quit search): ").strip()
 
         if city.lower() == 'q':
             return None
 
         if not city:
-            print("City name cannot be empty. Please enter a city name: ")
+            print("\nCity name cannot be empty. Please enter a city name: ")
             continue
 
         return city
@@ -103,19 +105,19 @@ def check_city(weather_data):
     """
     try:
         location = weather_data['location']
-        print(f"Found {location['name']} in region: {location['region']} and country: {location['country']}\n")
+        print(f"\n{Style.BRIGHT}Found {location['name']} in region: {location['region']} and country: {location['country']}")
 
         while True:
-            correct_city = input(f'Is this the city you want to see the weather forecast for? (y/n): ').lower()
+            correct_city = input(f'{SEPERATOR_SMALL}\nIs this the city you want to see the weather forecast for? (y/n): ').lower().strip()
             if correct_city in ['yes', 'y']:
                 return True
             elif correct_city in ['n', 'no']:
                 return False
             else:
-                print("\nInvalid input. Please enter 'y' or 'n'.")
+                print(f"\n{Fore.RED}Invalid input.{Fore.RESET} Please enter 'y' or 'n'.")
 
     except KeyError as e:
-        print(f'Missing expected data: {e}')
+        print(f'{Fore.RED}Missing expected data:{Fore.RESET} {e}')
         return False
 
 
@@ -141,11 +143,11 @@ def run_validated_weather_data():
     parsed = parse_weather_api(data)
 
     if not parsed['found']: # if no data from api - function returns
-        print(f'No data found: {parsed['error']}')
+        print(f'\n{Fore.RED}No data found{Fore.RESET}: {parsed['error']}')
         return False, None
 
     if not check_city(parsed['weather']):  # found data & city - check if city is the one you want to see
-        print('Asking for city again...\n')
+        print('\nAsking for city again...')
         return False, None
 
     return True, parsed['weather']
@@ -189,7 +191,7 @@ def display_current_weather(current: dict):
     :param weather: weather data dictionary for today and chosen city
     :return: Print current weather
     """
-    print(f'\n\u001b[34;1mThe current weather in {current['location']} at {current['time']} \u001b[0m')
+    print(f'\n{Fore.BLUE}{Style.BRIGHT}The current weather in {current['location']} at {current['time']}')
 
     table = PrettyTable()
     table.align = 'l'
@@ -248,7 +250,7 @@ def get_forecast_weather(weather: dict)-> dict:
 
 def display_forecast_weather(forecast:dict):
 
-    print(f'\n\u001b[34;1mForecast for {forecast['location']} on {forecast['date']}\u001b[0m')
+    print(f'\n{Fore.BLUE}{Style.BRIGHT}Forecast for {forecast['location']} on {forecast['date']}')
 
     table = PrettyTable()
     table.align = 'l'
@@ -292,7 +294,7 @@ def display_loop(option):
         if success is None: # User chose 'q' when searching for city - break loop
             break
 
-        if not success: # No data of city found or used rejects found city - restart loop
+        if not success: # No data of city found or user rejects found city - restart loop
             continue
 
         match option:
@@ -330,26 +332,32 @@ def weather_loop():
         try:
             choose_weather = int(input("Please choose an option: "))
 
+            action_completed = False
+
             match choose_weather:
                 case 1:
                     display_loop('current')
+                    action_completed = True
 
                 case 2:
                     display_loop('forecast')
+                    action_completed = True
 
                 case 3:
                     display_loop('clothing')
+                    action_completed = True
 
                 case 4:
                     return
 
                 case _:
-                    print(f'\033[31mInvalid choice.\033[0m Please choose between options 1 - 4. ')
+                    print(f'{Fore.RED}Invalid choice.{Fore.RESET} \nPlease choose between options 1 - 4. ')
 
-            if not ask_repeat("2. Get the weather forecast"):  # end menu cycle - ask if want to repeat
-                return
+            if action_completed:
+                if not ask_repeat("2. Get the weather forecast"):  # end menu cycle - ask if want to repeat
+                    return
 
         except ValueError as e:
-            print(f"\033[31mInvalid input\033[0m - error: {e} \nPlease enter a digit.\n")
+            print(f"{Fore.RED}Invalid input{Fore.RESET} -- Error: {e}\n \n{Style.BRIGHT}Please enter a digit.")
 
 
