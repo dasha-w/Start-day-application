@@ -15,6 +15,7 @@ init(
 )  # colorama initialisation. autoreset - resets style and colors at end of each print
 
 
+# Deze functies zouden wellicht beter naar de helper kunnen, gezien je daar ook al soortgelijke functies hebt
 def print_intro():
     print(
         f"{SEPERATOR_BIG}\n"
