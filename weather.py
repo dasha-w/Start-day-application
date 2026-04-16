@@ -1,12 +1,19 @@
+"""
+Module for interacting with WeatherAPI.com
+Handels data fetching, parsing, and displaying current weather, forecasts, and clothing advice
+"""
+
 import requests
 from colorama import Fore, Style
+from prettytable import PrettyTable, TableStyle
 
 from clothing_advice import display_clothing_advice
 from config import WEATHER_API_KEY
-from helpers import ask_repeat, parse_date, DEGREE_SYMBOL, SEPERATOR_BIG, SEPERATOR_SMALL
-from prettytable import PrettyTable, TableStyle
+from helpers import ask_repeat, parse_date, DEGREE_SYMBOL, SEPERATOR_BIG, SEPERATOR_SMALL, MENU_OPTIONS, print_menu
+
 
 ## ================= VARIABLES =====================
+# Mapping for wind direction
 WIND_DIR_MAP = {
     'N': 'Northern', 'S': 'Southern', 'E': 'Eastern', 'W': 'Western',
     'NE': 'Northeastern', 'NW': 'Northwestern', 'SE': 'Southeastern', 'SW': 'Southwestern',
@@ -15,28 +22,20 @@ WIND_DIR_MAP = {
 }
 
 
-#================ FUNCTIONS =====================
-def print_weather_menu():
-    print(f"\n{SEPERATOR_BIG}\nThese are your options: \n"
-          f"{SEPERATOR_SMALL}\n"
-          f'{Fore.BLUE}{Style.BRIGHT}1. Get the current weather conditions\n'
-          f"2. Get the weather forecast for today\n"
-          f"3. Get clothing advice for today's weather forecast\n"
-          f"4. Back\n")
 
 # ============ GET WEATHER DATA FROM API ============
-def get_weather_in_city(city):
+def get_weather_in_city(city: str) -> dict | None:
     """
-    Get data from weather api. Returns weather data or None on failure
+    Get data for specific city from weather api.
     No check for status code -- will be handles in parse_weather_api
     :param city: city name string
-    :return: json response OR None
+    :return: JSON response or None on failure
     """
 
-    API_KEY = WEATHER_API_KEY
+    api_key = WEATHER_API_KEY
 
     url = "https://api.weatherapi.com/v1/forecast.json"
-    params = {"key": API_KEY, "aqi": "no", "q":city}
+    params = {"key": api_key, "aqi": "no", "q":city}
 
     try:
         response = requests.get(url, params = params)
@@ -51,12 +50,13 @@ def get_weather_in_city(city):
 
 
 #============= PARSE WEATHER OUTPUT =================
-def parse_weather_api(weather_data):
+def parse_weather_api(weather_data: dict | None) -> dict:
     """
     Normalize API response into standard format
-    Handles errors from API. If statuscode != 200, the api should return JSON containing 'error'
-    :param weather_data: json from weather api
-    :return: {'found': bool, 'weather': dict, 'error': None or str
+    Handles errors from API.
+        If statuscode != 200, the api should have returned JSON containing 'error'
+    :param weather_data: JSON from weather api or None
+    :return: dict {'found': bool, 'weather': dict, 'error': None or str
     """
     result = {'found': False, 'weather': {}, 'error': None}
 
@@ -78,7 +78,7 @@ def parse_weather_api(weather_data):
 
 
 #============= GET INPUT CITY AND CONFIRM CITY =============
-def get_city():
+def get_city()-> str | None:
     """
     Asks user for city name. Input cannot be empty. User can quit the search.
     :return: string or None
@@ -96,12 +96,12 @@ def get_city():
         return city
 
 
-def check_city(weather_data):
+def check_city(weather_data: dict)-> bool:
     """
-    From API data the location is shown.
-    User is asked if the location is indeed the city the user wants the weather information for
-    :param weather_data: parsed weather_data within a dict
-    :return: bool - True if confirmed, False if not
+    Confirm with user if found location matches their intent
+
+    :param weather_data: parsed weather_data containing location information
+    :return: bool - True if user confirms, False if not
     """
     try:
         location = weather_data['location']
@@ -122,15 +122,18 @@ def check_city(weather_data):
 
 
 # ============ GET VALIDATED WEATHER DATA ==============
-def run_validated_weather_data():
+def run_validated_weather_data()-> tuple[bool | None, dict| None]:
     """
-    Handles iteration of getting weather data and validating
+    Handles iteration of getting weather data and validating city with user
     :return:
-        1) None - if user quits city input
-           Bool - True - if data found & city confirmed
-                - False - if city rejected or no data found for city
-        2) None - if 1 is None or False
-           Dict - if 1 is True
+        tuple: (success_status, weather_data)
+            - succes_status:
+                None if user quits,
+                True if data found & confirmed
+                False if city rejected or no data found
+            - weather_data:
+                None if success_status is None or False
+                dict if success_status is True
     """
 
     city = get_city()
@@ -156,18 +159,23 @@ def run_validated_weather_data():
 #============= CURRENT WEATHER =======================
 
 def get_current_weather(weather:dict)->dict:
+    """
+    Extract current weather data from API response
+    :param weather: dict - full weather data dict from API
+    :return: dict - simplified dictionary with current weather information
+    """
 
     current_dict = {}
 
     current_dict['location'] = weather['location']['name']
     current_dict['date'] = parse_date(weather['forecast']['forecastday'][0]['date'])
 
-    #parse current weather
+    # --- parse current weather ---
     weather_current = weather['current']
     # time
     current_dict['time'] = weather_current['last_updated'][11:]
 
-    #temp
+    # temperature
     current_dict['temp'] = f'{weather_current['temp_c']}{DEGREE_SYMBOL}C'
     current_dict['feels_temp'] = f'{weather_current['feelslike_c']}{DEGREE_SYMBOL}C'
 
@@ -185,11 +193,10 @@ def get_current_weather(weather:dict)->dict:
     return current_dict
 
 
-def display_current_weather(current: dict):
+def display_current_weather(current: dict)-> None:
     """
-    Extract current weather data and print.
-    :param weather: weather data dictionary for today and chosen city
-    :return: Print current weather
+    Display current weather data in formatted table
+    :param weather: simplified current weather data from get_current_weather
     """
     print(f'\n{Fore.BLUE}{Style.BRIGHT}The current weather in {current['location']} at {current['time']}')
 
@@ -214,19 +221,19 @@ def display_current_weather(current: dict):
 #=============== WEATHER FORECAST TODAY ==============
 def get_forecast_weather(weather: dict)-> dict:
     """
-    Extract relevant weather data into dict for printing function
-    :param weather: dict
-    :return: smaller dict
+    Extract daily weather data from API response
+    :param weather: dict - full weather data dictionary from API
+    :return: dict - simplified dict with forecast information
     """
     forecast = {}
 
     forecast['location'] = weather['location']['name']
     forecast['date'] = parse_date(weather['forecast']['forecastday'][0]['date'])
 
-    # parse forecast for today
+    # --- parse forecast for today ---
     weather_forecast = weather['forecast']['forecastday'][0]['day']
 
-    #temp
+    # temperature
     forecast['min_temp'] = f'{weather_forecast['mintemp_c']}{DEGREE_SYMBOL}C'
     forecast['max_temp'] = f'{weather_forecast['maxtemp_c']}{DEGREE_SYMBOL}C'
     forecast['avg_temp'] = f'{weather_forecast['avgtemp_c']}{DEGREE_SYMBOL}C'
@@ -248,7 +255,11 @@ def get_forecast_weather(weather: dict)-> dict:
     return forecast
 
 
-def display_forecast_weather(forecast:dict):
+def display_forecast_weather(forecast:dict)-> None:
+    """
+    Display forecast weather data in formatted table
+    :param forecast: simplified dict from get_forecast_weather
+    """
 
     print(f'\n{Fore.BLUE}{Style.BRIGHT}Forecast for {forecast['location']} on {forecast['date']}')
 
@@ -268,7 +279,7 @@ def display_forecast_weather(forecast:dict):
         ]
     )
 
-    # Add snow to table if there is snow
+    # Add snow to table if present
     if 'snow_chance' in forecast:
         table.add_rows(
             [
@@ -281,12 +292,14 @@ def display_forecast_weather(forecast:dict):
 
 
 # =========== DISPLAY LOOP ==================
-def display_loop(option):
+def display_loop(option:str)-> None:
     """
-    Uses validated weather data to control loop. If checks (data found and user accepts city found and does not
-    quit) are passed, weather data is displayed according to 'option'
-    :param option: str 'current', 'forecast' or 'clothing' calls different display functions
-    :return: None
+    Control display loop for weather data.
+    Fetches validated weather data and displays according to selected option.
+        if checks passed, weather is displayed
+        checks: data found, user confirms found city and user does not quit search
+
+    :param option: 'current', 'forecast' or 'clothing' - for different display functions
     """
     while True:
         success, weather_data = run_validated_weather_data()
@@ -323,14 +336,15 @@ def display_loop(option):
 # =================== WEATHER SUBMENU LOOP ==================
 def weather_loop():
     """
-    function controls loop over submenu weather and calls functions for different options.
-    :return: None
+    Main loop for weather submenu
+    Displays menu and routes to appropriate display functions
     """
     while True:
-        print_weather_menu()
+        print_menu("weather")
 
         try:
             choose_weather = int(input("Please choose an option: "))
+            max_options = len(MENU_OPTIONS['weather']['options'])
 
             action_completed = False
 
@@ -351,7 +365,7 @@ def weather_loop():
                     return
 
                 case _:
-                    print(f'{Fore.RED}Invalid choice.{Fore.RESET} \nPlease choose between options 1 - 4. ')
+                    print(f'{Fore.RED}Invalid choice.{Fore.RESET} \nPlease choose between options 1 - {max_options}. ')
 
             if action_completed:
                 if not ask_repeat("2. Get the weather forecast"):  # end menu cycle - ask if want to repeat

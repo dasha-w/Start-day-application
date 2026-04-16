@@ -1,6 +1,6 @@
 import sys
 from colorama import init, Fore, Style
-from helpers import SEPERATOR_BIG, SEPERATOR_SMALL
+from helpers import SEPERATOR_BIG, SEPERATOR_SMALL, print_menu, MENU_OPTIONS
 from inspiration import inspiration_loop
 from weather import weather_loop
 
@@ -10,8 +10,9 @@ from weather import weather_loop
 # Het is zeker goed om hier naast comments ook je docstrings en type hints te gebruiken. Dat maakt het voor iemand anders nog makkelijker om te begrijpen wat er gebeurt.
 # TIP: AI is hier heel goed in :P
 
-# Wat is dit? :D
-init(autoreset=True)
+init(
+    autoreset=True
+)  # colorama initialisation. autoreset - resets style and colors at end of each print
 
 
 def print_intro():
@@ -48,18 +49,16 @@ def main():
     print_intro()
 
     while True:
-        print_main_menu()
+        print_menu("main")
 
         try:
+            max_option = len(MENU_OPTIONS["main"]["options"])
             choose_main = int(input("Please choose an option: "))
 
             # Dit zou je in een match case kunnen zetten. Dat vind ik er altijd mooier uitzien
             # Voorbeeld hier: https://docs.python.org/3.10/whatsnew/3.10.html#pep-634-structural-pattern-matching
             if choose_main == 1:
-                # Als je een module zoals ruff gebruikt, geeft hij automatisch informatie over pep8 compliance
-                print(
-                    f"\nGreat!"
-                )  # Hier bijvoorbeeld: https://docs.astral.sh/ruff/rules/f-string-missing-placeholders/
+                print(f"\nGreat!")
                 inspiration_loop()
 
             elif choose_main == 2:
@@ -69,7 +68,6 @@ def main():
                 exit_application()
 
             else:
-                # Dit is hardcoded. Als je de opties in een lijst zou zetten, zou je kunnen checken of de input in die lijst zit en is het dynamisch wanneer je opties toevoegt of verwijdert.
                 print(
                     f"{Fore.RED}Invalid choice.{Fore.RESET} \nPlease choose between options 1 - 3. \n"
                 )

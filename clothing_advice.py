@@ -1,3 +1,8 @@
+"""
+Module for generating clothing advice based on weather forecast data.
+Analyzes temperature, wind, rain, snow, and UV-index between 8am and 8pm.
+"""
+
 from collections import Counter
 
 from colorama import Fore, Style
@@ -7,60 +12,77 @@ from helpers import parse_date, DEGREE_SYMBOL, SEPERATOR_SMALL
 #========= VARIABLES ============
 KEY_FILTERS_CLOTHING_WEATHER = ['temp_c', 'condition', 'wind_kph', 'precip_mm', 'feelslike_c', 'will_it_rain',
                                 'chance_of_rain', 'uv', "will_it_snow"]
+# temperature threshold in celsius
 TEMP_THRESHOLD = {'cold' : 5, 'chilly' : 10, 'mild' : 15, 'mild/warm' : 20, 'warm' : 25}
+# wind threshold in kph
 WIND_THRESHOLD = {'windy':30, 'strong_wind':45}
+# UV index threshold
 UV_THRESHOLD = {'medium':3, 'high':6}
+# temperature range threshold (max - min temperature)
 TEMP_RANGE_THRESHOLD = {'medium': 6, 'high':10}
-RAIN_CHANCE_THRESHOLD = 10 #chance of rain higher than 10%
-RAIN_MM_THRESHOLD = 1 #1 mm rain
+# rain probability threshold in %
+RAIN_CHANCE_THRESHOLD = 10
+# rain amount threshold in mm
+RAIN_MM_THRESHOLD = 1
 
 
-def get_forecast_descriptives(filtered_hourly: list[dict[str, str|float|int]]):
+def get_forecast_descriptives(filtered_hourly: list[dict[str, str|float|int]]) -> dict:
     """
     Get descriptive weather values from a list of hourly forecast data.
-    :param filtered_hourly: List of dictionaries. List items are hours.
-    :return: dictionary of descriptive statistics
+    :param:
+        filtered_hourly (list[dict]): List of dictionaries with list. Each item list in dict is an hour.
+    :return:
+        dict: dictionary of descriptive statistics
+        (temperature (min, max, avg, range, feel), wind, uv, snow, rain, condition)
     """
 
     descriptives = {}
 
-    ### Temperature
+    # --- Temperature ---
     descriptives['min_temp'] = min(hour['temp_c'] for hour in filtered_hourly)
     descriptives['max_temp'] = max(hour['temp_c'] for hour in filtered_hourly)
     descriptives['avg_temp'] = round(sum(hour['temp_c'] for hour in filtered_hourly) / len(filtered_hourly), 2)
     descriptives['temp_range'] = round(descriptives['max_temp'] - descriptives['min_temp'],2)
 
-    ### Feelslike temperature
+    # --- Feels like temperature ---
     descriptives['feel_min_temp'] = min(hour['feelslike_c'] for hour in filtered_hourly)
     descriptives['feel_max_temp'] = max(hour['feelslike_c'] for hour in filtered_hourly)
     descriptives['feel_avg_temp'] = round(sum(hour['feelslike_c'] for hour in filtered_hourly) / len(filtered_hourly), 2)
 
 
-    ### Wind & UV
+    # --- Wind & UV ---
     descriptives['avg_wind'] = round(sum(hour['wind_kph'] for hour in filtered_hourly) / len(filtered_hourly), 2)
     descriptives['max_uv'] = max(hour['uv'] for hour in filtered_hourly)
 
-    ###  most common condition str
+    # --- most common condition (str) ---
     conditions = [hour['condition'] for hour in filtered_hourly]
     count_conditions = Counter(conditions)
     descriptives['most_common_condition'] = count_conditions.most_common(1)[0][0] # if multiple have highest count first in alphabet is returned
 
-    # Rain
+    # --- Rain ---
     descriptives['tot_precip'] = round(sum(hour['precip_mm'] for hour in filtered_hourly)) #krijg to echt float met veel achter komma zonder round()
     descriptives['avg_chance_rain'] = round(sum(hour['chance_of_rain'] for hour in filtered_hourly) / len(filtered_hourly))
     descriptives['will_it_rain'] = True if sum(hour['will_it_rain'] for hour in filtered_hourly) > 0 else False
 
-    # Snow
+    # --- Snow ---
     descriptives['will_it_snow'] = True if sum(hour['will_it_snow'] for hour in filtered_hourly) > 0 else False
 
     return descriptives
 
 
 def generate_clothing_advice(descriptives: dict) -> dict:
+    """
+    Generate clothing advice strings based on weather discriptives
+
+    :param:
+        descriptives (dict): dictionary of weather stats from get_forecast_descriptives
+    :return:
+        dict: containing advice strings for temp, range, rain, wind, snow, UV
+    """
 
     advice = {}
 
-    #temperature
+    # --- temperature ---
     avg_temp = descriptives['feel_avg_temp']
     if avg_temp <= TEMP_THRESHOLD['cold']:
         advice['temp'] = (f"It's going to feel {Fore.BLUE}cold{Style.RESET_ALL} today. Bundle up!\n"
@@ -82,7 +104,7 @@ def generate_clothing_advice(descriptives: dict) -> dict:
                           f">   Wear breathable clothing and seek out shade.")
 
 
-    # temperature range
+    # --- temperature range ---
     temp_range = descriptives['temp_range']
     if temp_range > TEMP_RANGE_THRESHOLD['high']:
         advice['range'] = (f'There will be a {Fore.BLUE}big temperature{Fore.RESET} range today (range: {temp_range}{DEGREE_SYMBOL}C). \n'
@@ -93,7 +115,7 @@ def generate_clothing_advice(descriptives: dict) -> dict:
         advice['range'] = f"Temperature will be {Fore.BLUE}fairly consistent{Fore.RESET} throughout the day.\n"
 
 
-    # advice when rain
+    # --- advice when rain ---
     rain_chance = descriptives['avg_chance_rain']
     rain_tot = descriptives['tot_precip']
 
@@ -114,12 +136,12 @@ def generate_clothing_advice(descriptives: dict) -> dict:
                               f'with a total of {rain_tot} mm rain forecast.\n'
                               f'>   Consider carrying an umbrella. ')
 
-    # advice snow
+    # --- advice snow ---
     if descriptives['will_it_snow']:
         advice['snow'] = (f"It's going to {Fore.BLUE}snow{Fore.RESET} today! \n"
                           f">   Make sure your outer layers are warm and waterproof and definitely bring gloves.")
 
-    # advice wind
+    # --- advice wind ---
     avg_wind = descriptives['avg_wind']
     if avg_wind > WIND_THRESHOLD['windy']:
         advice['wind'] = (f"It's going to be {Fore.BLUE}windy{Fore.RESET} today with {avg_wind}kph winds. \n"
@@ -128,17 +150,27 @@ def generate_clothing_advice(descriptives: dict) -> dict:
         advice['wind'] = (f"There wil be {Fore.BLUE}strong winds{Fore.RESET} of {avg_wind} kph. \n"
                           f">   Wear a windbreaker and be careful outside!")
 
-    # advice UV
+    # --- advice UV ---
     uv_index = descriptives['max_uv']
     start_advice = f"The max {Fore.BLUE}UV-index{Fore.RESET} will be {uv_index}.\n"
     if uv_index > UV_THRESHOLD['high']:
         advice['uv'] = start_advice + f">   Protect your skin with sunscreen and a hat! The sun is fierce today!"
     elif uv_index > UV_THRESHOLD['medium']:
         advice['uv'] = start_advice + f'>   Apply sunscreen before going outside.'
+
     return advice
 
 
-def print_clothing_advice(location:str, date:str, descriptives:dict, advice:dict):
+def print_clothing_advice(location:str, date:str, descriptives:dict, advice:dict) -> None:
+    """
+    Print the formatted clothing advice to the console
+
+    :param:
+        location (str): Name of city
+        date (str): Formatted date string
+        descriptives (dict): Weather statistics
+        advice (dict): Generated advice strings
+    """
 
     print(f'\n{Fore.BLUE}This clothing advice is based on the forecast for {location} on {date} '
           f'between 8am and 8pm:\n{Fore.RESET}'
@@ -163,33 +195,35 @@ def print_clothing_advice(location:str, date:str, descriptives:dict, advice:dict
         print(advice['uv'])
 
 
-def display_clothing_advice(weather):
+def display_clothing_advice(weather) -> None:
     """
-    Extract forecast weather data from 8am to 8pm and print clothing advice.
-    :param weather: weather data dictionary for today and chosen city
-    :return: Print clothing advice
+    Main entry point for clothing advice.
+    Extracts forecast from 8am - 8pm, calculates stats, and prints clothing advice
+
+    :param:
+        weather (dict): Raw weather data dictionary for API
     """
-    #get location and date
+    # get location and date
     location = weather['location']['name']
     date = parse_date(weather['forecast']['forecastday'][0]['date'])
 
-
-    #get forecast between 8am and 8pm (index 0 = hour 0:00)
+    # filter forecast between 8am and 8pm (index 0 = hour 0:00)
     forecast_hourly = weather['forecast']['forecastday'][0]['hour'][8:21]
 
-    # filter dictionary by key for each hour in list
+    # filter dictionary by key for each hour in list - reduce data
     filtered_hourly = [
         {key: hour[key] for key in KEY_FILTERS_CLOTHING_WEATHER}
         for hour in forecast_hourly
     ]
-    # extract condition text
+    # extract condition text from nested dictionary
     for hour in filtered_hourly:
         hour['condition'] = hour['condition']['text']
 
+    # generate statistics and advice
     descriptives = get_forecast_descriptives(filtered_hourly)
-
     advice = generate_clothing_advice(descriptives)
 
+    # Output results
     print_clothing_advice(location, date, descriptives, advice)
 
 
