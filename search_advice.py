@@ -1,3 +1,8 @@
+"""
+Module for searching advice slips by keyword using AdviceSlip API.
+Handles search logic, parsing, and user interaction for browsing results.
+"""
+
 import requests
 from colorama import Fore, Style
 
@@ -5,11 +10,12 @@ from helpers import ask_repeat, SEPERATOR_BIG, SEPERATOR_SMALL
 
 
 #--------------------- SEARCH ADVICE ----------------------
-def search_advice(keyword):
+def search_advice(keyword: str)-> dict | None:
     """
-    api request for search advice slips endpoint
+    Search for advice slips by keyword via API.
+
     :param keyword: the word to search for
-    :return: json or None
+    :return: dict | None: JSON data or None on failure
     """
     url = f'https://api.adviceslip.com/advice/search/{keyword}'
 
@@ -28,12 +34,12 @@ def search_advice(keyword):
 
 
 #--------------------- PARSE ADVICE RESPONSE ----------------------
-def parse_api_advice_response(api_data):
+def parse_api_advice_response(api_data: dict | None) -> dict:
     """
        Normalize inconsistent API response of advice slip into standard format.
 
-       :param api_data: from advice api
-       :return: {'found: bool, 'slips': list, 'error': str or None}
+       :param api_data: raw JSON from API | None
+       :return: dict: {'found: bool, 'slips': list, 'error': str or None}
        """
     result = {'found': False, 'slips': [], 'error': None}
 
@@ -51,20 +57,19 @@ def parse_api_advice_response(api_data):
 
 
 #--------------------- DISPLAY AND CHOOSE FROM NUMBER OF ADVICE SLIPS FOUND ----------------------
-def display_number_results(count):
+def display_number_results(count: int)-> None:
     """
-    display the number of advice slips found with the keyword
-    :return: print statement
+    display the number of advice slips (results) found with the keyword
     """
-    print(f'\nFound {count} advice slip(s). ')
+    print(f'\n> Found {count} advice slip(s). ')
 
 
-def choose_advice(total_count):
+def choose_advice(total_count: int)-> int:
     """
-    Ask the user to choose an advice slip number.
+    Ask the user to choose an advice slip number from the total number of results.
     Function validates if the number is within range
-    :param total_count: length of slips
-    :return: index (0-based)
+    :param total_count: Total nymber of slips found
+    :return: int: index (0-based)
     """
 
     while True:
@@ -83,12 +88,11 @@ def choose_advice(total_count):
 
 
 #--------------------- DISPLAY CHOSEN ADVICE  ----------------------
-def display_chosen_advice(data, index):
+def display_chosen_advice(data: list, index: int)-> None:
     """
-    Display the found advice slip from the chosen index
-    :param data: list of advice slips from parsed dictionary
-    :param index: the chosen number converted to 0-index
-    :return: printed advice
+    Display the specific advice slip from the chosen index
+    :param data (list): list of advice slips from parsed dictionary
+    :param index (int): Index number of slip to display
     """
     try:
         advice = data[index]['advice']
@@ -100,11 +104,11 @@ def display_chosen_advice(data, index):
         print(f'Unexpected response format. {Fore.RED}Error: {e}')
 
 
-def browse_slips(slips):
+def browse_slips(slips: list) -> None:
     """
-    Let the user see the slips and choose to display multiple slips if more than 1 was found.
-    :param slips: list of found slips
-    :return: display chosen result while True or None when False.
+    Allow user to browse multiple slips if more than 1 is found
+
+    :param slips: list of found advice slips
     """
 
     total_count = len(slips)
@@ -119,7 +123,11 @@ def browse_slips(slips):
         display_chosen_advice(slips, chosen)
 
         while True:
-            again = input(f"\n{Fore.YELLOW}{Style.BRIGHT}Would you like to see another advice slip of the {total_count} found? (y/n): ").lower().strip()
+            again = input(
+                f"\n{Fore.YELLOW}{Style.BRIGHT}Would you like to see another advice slip of "
+                f"the {total_count} found? (y/n): "
+            ).lower().strip()
+
             if again in ['y', 'yes']:
                 break
             elif again in ['n', 'no']:
@@ -129,16 +137,15 @@ def browse_slips(slips):
 
 
 #--------------------- RUN ADVICE SEARCH  ----------------------
-def run_advice_search():
+def run_advice_search() -> bool:
     """
-       Handles 1 search for advice slips
-       - asking for keyword
-       - fetching data from api
-       - parses data
-       - browses results (one or more)
+    Function handles 1 search for advice slips
+        input keyword -> fetch data -> parse data -> display
+            & browse slips if more than 1
+    :return: bool - True if search completed successfully or user quit
+        False if search unsuccessful.
+    """
 
-       :return:
-       """
     print(f"\n===== SEARCH for ADVICE =====\n")
     keyword = input(f"You are about to search for advice based on a keyword (e.g. 'life', 'happiness').\n{SEPERATOR_SMALL}\n"
                     "What keyword do you want to search for? (q to quit search): ").lower()
@@ -172,11 +179,8 @@ def run_advice_search():
     return True
 
 
-def advice_search_loop():
-    """
-    Handles search for advice slips with a keyword in a loop.
-    :return:
-    """
+def advice_search_loop() -> None:
+    """ Loop for repeated advice searches """
     while True:
         search_completed = run_advice_search()
 
