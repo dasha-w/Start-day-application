@@ -100,6 +100,8 @@ def display_joke(joke_data: dict | None) -> None:
     :param joke_data: dict | None: JSON data from API
     """
 
+    # Deze error afhandeling zou in de API functie horen. Het is een fout in de data en niet in de representatie
+    # Errors die hier thuis horen zijn ondere andere key errors, type errors. Eigenlijk alles wat te maken heeft met inhoudelijke data
     if joke_data is None:
         print(f"Unable to fetch new quote at this time.")
         fall_back("joke")
@@ -108,6 +110,8 @@ def display_joke(joke_data: dict | None) -> None:
     try:
         setup = joke_data["setup"]
         punchline = joke_data["punchline"]
+
+        # Deze print statement zou je nog kunnen splitsen om een sleep ertussen te zetten. Zodat je niet direct de punchline ziet
         print(
             f"{SEPERATOR_BIG}\n"
             f"Your joke for today is:\n"
@@ -138,6 +142,8 @@ def display_quote(quote_data: list | None) -> None:
         return
 
     try:
+        # Gezien je altijd maar 1 quote terug krijgt kan je overwegen om het data model daarop aan te passen.
+        # Dus dan maak je er een dict van in plaats van een list. Dan hoef je hier ook niet de index te gebruiken en is het gelijk duidelijk dat er maar 1 quote is
         quote_str = quote_data[0]["q"]
         author = quote_data[0]["a"]
         print(
@@ -198,6 +204,7 @@ def inspiration_loop():
             # Volgens mij kan je dit herschrijven naar 1 functie call. Als je de mapping in een list zet en deze meegeeft aan de functie. Dan is de match case overbodig
             match choose_inspiration:
                 case 1:
+                    # Idee. Als de joke niet gebruikt worden buiten de display functie, dan kan je deze ook direct in de display functie ophalen. Dan is de overall flow iets netter.
                     joke = get_api_data("joke")
                     display_joke(joke)
                     action_completed = True
