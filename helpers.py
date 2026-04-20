@@ -4,6 +4,7 @@ Contains constants and functions for date parsing, user input validation
 """
 
 import datetime as dt
+import re
 from colorama import Fore, Style
 
 # Constants for terminal formatting
@@ -54,12 +55,15 @@ def ask_repeat(prompt: str = "") -> bool:
 
     while True:
         again = input(f"\nDo you want to repeat the action: {Fore.BLUE}{prompt}{Fore.RESET}? (y/n): ").strip().lower()
+
+        if not validate_input(again, "yn"):
+            print(f"\n{Fore.RED}Invalid input.{Fore.RESET} Please enter 'y' or 'n'.")
+
         if again in ["y", "yes"]:
             return True
         elif again in ["n", "no"]:
             return False
-        else:
-            print(f"\n{Fore.RED}Invalid input.{Fore.RESET} Please enter 'y' or 'n'.")
+
 
 
 def parse_date(date: str) -> str:
@@ -104,3 +108,26 @@ def print_menu(menu_name: str):
         print(f"{color}{Style.BRIGHT}{i}. {option}")
 
     print("") # empty line after menu
+
+
+def validate_input(input_string, pattern_type = "alphanumeric"):
+    """
+    Validate input based on pattern type.
+    :param input_string: str - input to validate
+    :param pattern_type: str - 'alphanumeric', 'city', 'digits','yn', 'advice_search'
+    :return: bool
+    """
+
+    patterns = {
+        "alphanumeric": r"^[a-zA-Z0-9]+$",
+        "advice_search": r"^[a-zA-Z0-9\s\-']", # letters, digits, space, - and '
+        "city": r"^[a-zA-Z\s\-']+$", #letters, space, - and '
+        "yn": r"^[y|yes|n|no]$" # for yes/no input options
+    }
+
+    if not input_string:
+        return False
+
+    pattern = patterns.get(pattern_type, patterns["alphanumeric"])
+    return bool(re.match(pattern, input_string))
+

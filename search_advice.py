@@ -6,7 +6,7 @@ Handles search logic, parsing, and user interaction for browsing results.
 import requests
 from colorama import Fore, Style
 
-from helpers import ask_repeat, SEPERATOR_BIG, SEPERATOR_SMALL
+from helpers import ask_repeat, SEPERATOR_BIG, SEPERATOR_SMALL, validate_input
 
 
 #--------------------- SEARCH ADVICE ----------------------
@@ -128,12 +128,13 @@ def browse_slips(slips: list) -> None:
                 f"the {total_count} found? (y/n): "
             ).lower().strip()
 
+            if not validate_input(again, "yn"): # validates input to only y/n
+                print("\n{Fore.RED}Invalid input.{Fore.RESET} Please enter 'y' or 'n'.")
+
             if again in ['y', 'yes']:
-                break
+                break # breaks again while loop and goes back to choose_advice
             elif again in ['n', 'no']:
-                return
-            else:
-                print("Please enter 'y' or 'n'.")
+                return # ends function
 
 
 #--------------------- RUN ADVICE SEARCH  ----------------------
@@ -152,6 +153,10 @@ def run_advice_search() -> bool:
 
     if not keyword:
         print(f"\n{Fore.RED}Keyword cannot be empty.{Fore.RESET}\n{SEPERATOR_SMALL}")
+        return False
+
+    if not validate_input(keyword, "advice_search"):
+        print(f"\n{Fore.RED}Invalid input.{Fore.RESET} Please only enter letters, digits, a space, '-', or apostrophe.")
         return False
 
     if keyword == 'q':

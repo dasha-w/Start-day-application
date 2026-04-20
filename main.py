@@ -28,14 +28,14 @@ def main():
         print_menu("main")
 
         try:
-            max_option = len(MENU_OPTIONS["main"]['options'])
+            max_option = len(MENU_OPTIONS["main"]["options"])
             choose_main = int(input("Please choose an option: "))
 
             if choose_main == 1:
                 print("\nGreat!")
                 inspiration_loop()
 
-            elif choose_main ==2:
+            elif choose_main == 2:
                 weather_loop()
 
             elif choose_main == 3:

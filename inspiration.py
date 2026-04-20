@@ -11,7 +11,7 @@ from search_advice import advice_search_loop
 
 
 #--------------------- FALLBACK ----------------------
-def fall_back(categorie: str) ->None:
+def fall_back(categorie: str) -> None:
     """
     Display hardcoded fallback advice, quote and joke in case API call fails
     (if API fails, API functions returns None)
@@ -20,29 +20,29 @@ def fall_back(categorie: str) ->None:
         categorie (str): quote, advice, or joke
     """
     fall_back_advice = '"Every journey begins with a single step."'
-    fall_back_quote = ('"I learned that courage was not the absence of fear, but the triumph over it. '
-                       'The brave man is not he who does not feel afraid, but he who conquers that fear."\n'
-                       '- Nelson Mandela')
-    fall_back_joke = ("What's a computer's favorite snack?\n"
-                      "\n"
-                      "Microchips")
+    fall_back_quote = (
+        '"I learned that courage was not the absence of fear, but the triumph over it. '
+        'The brave man is not he who does not feel afraid, but he who conquers that fear."\n'
+        "- Nelson Mandela"
+    )
+    fall_back_joke = "What's a computer's favorite snack?\n\nMicrochips"
 
-    if categorie == 'advice':
+    if categorie == "advice":
         print_text = fall_back_advice
-    if categorie == 'quote':
+    if categorie == "quote":
         print_text = fall_back_quote
-    if categorie == 'joke':
+    if categorie == "joke":
         print_text = fall_back_joke
 
-    print(f'{SEPERATOR_BIG}\n'
-          f'Printing fallback {categorie}.\n'
-          f'Your {categorie} for today is:\n'
-          f'{SEPERATOR_SMALL}\n'
-          f'{print_text}')
+    print(f"{SEPERATOR_BIG}\n"
+          f"Printing fallback {categorie}.\n"
+          f"Your {categorie} for today is:\n"
+          f"{SEPERATOR_SMALL}\n"
+          f"{print_text}")
 
 
 #---------------------- API -----------------------
-def get_api_data(categorie:str) -> dict | None:
+def get_api_data(categorie: str) -> dict | None:
     """
     Fetch API data
     :param categorie: Type of content to fetch (advice, quote, joke)
@@ -55,11 +55,11 @@ def get_api_data(categorie:str) -> dict | None:
     url_joke = "https://jokefather.com/api/jokes/random"
 
     match categorie:
-        case 'advice':
+        case "advice":
             url = url_advice
-        case 'quote':
+        case "quote":
             url = url_quote
-        case 'joke':
+        case "joke":
             url = url_joke
         case _:
             print(f"{Fore.RED}Incorrect categorie parameter.{Fore.RESET} "
@@ -71,11 +71,11 @@ def get_api_data(categorie:str) -> dict | None:
         if response.status_code == 200:
             return response.json()
         else:
-            print(f'Something went wrong. Status code: {response.status_code}')
+            print(f"Something went wrong. Status code: {response.status_code}")
             return None
 
     except requests.exceptions.RequestException as e:
-        print(f'Error {e}')
+        print(f"Error {e}")
         return None
 
 
@@ -89,23 +89,23 @@ def display_joke(joke_data: dict | None) -> None:
     :param joke_data: dict | None: JSON data from API
     """
 
-    if joke_data is None:
-        print(f'Unable to fetch new quote at this time.')
+    if joke_data is None: #try api failed or statuscode != 200
+        print(f"Unable to fetch new quote at this time.")
         fall_back("joke")
         return
 
     try:
         setup = joke_data["setup"]
         punchline = joke_data["punchline"]
-        print(f'{SEPERATOR_BIG}\n'
-              f'Your joke for today is:\n'
-              f'{SEPERATOR_SMALL}\n'
-              f'{setup}\n'
-              f'\n'
-              f'{punchline}')
+        print(f"{SEPERATOR_BIG}\n"
+              f"Your joke for today is:\n"
+              f"{SEPERATOR_SMALL}\n"
+              f"{setup}\n"
+              f"\n"
+              f"{punchline}")
 
     except (KeyError, TypeError) as e:
-        print(f'Unexpected response format. Error: {e}')
+        print(f"Unexpected response format. Error: {e}")
         fall_back("joke")
 
 
@@ -120,21 +120,21 @@ def display_quote(quote_data: list | None) -> None:
     """
 
     if quote_data is None:
-        print(f'Unable to fetch new quote at this time.')
+        print(f"Unable to fetch new quote at this time.")
         fall_back("quote")
         return
 
     try:
         quote_str = quote_data[0]["q"]
         author = quote_data[0]["a"]
-        print(f'{SEPERATOR_BIG}\n'
-              f'Your quote for today is:\n'
-              f'{SEPERATOR_SMALL}\n'
+        print(f"{SEPERATOR_BIG}\n"
+              f"Your quote for today is:\n"
+              f"{SEPERATOR_SMALL}\n"
               f'"{quote_str}"\n'
-              f'- {author}')
+              f"- {author}")
 
     except (KeyError, TypeError) as e:
-        print(f'Unexpected response format. Error: {e}')
+        print(f"Unexpected response format. Error: {e}")
         fall_back("quote")
 
 
@@ -145,36 +145,36 @@ def display_advice(advice_data: dict | None) -> None:
         If data is None - fallback advice will be printend.
         If data has advice, the data is parsed, and text is printed.
         If the data format gives an error - again fallback advice will be printen.
-    :param advice_data (dict| None): JSON data from API
+    :param advice_data: JSON data from API
     """
 
     if advice_data is None:
-        print(f'Unable to fetch new advice at this time.')
+        print(f"Unable to fetch new advice at this time.")
         fall_back("advice")
         return
 
     try:
-        new_advice = advice_data['slip']['advice']
-        print(f'{SEPERATOR_BIG}\n'
-              f'Your advice for today is:\n'
-              f'{SEPERATOR_SMALL}\n'
+        new_advice = advice_data["slip"]["advice"]
+        print(f"{SEPERATOR_BIG}\n"
+              f"Your advice for today is:\n"
+              f"{SEPERATOR_SMALL}\n"
               f'"{new_advice}"')
 
     except (KeyError, TypeError) as e:
-        print(f'Unexpected response format. Error: {e}')
+        print(f"Unexpected response format. Error: {e}")
         fall_back("advice")
 
 
-#----------------------- MAIN LOOP INSPIRATION SUBMENU ----------------
+# ----------------------- MAIN LOOP INSPIRATION SUBMENU ----------------
 def inspiration_loop():
-    """ Main loop for the inspiration submenu """
+    """Main loop for the inspiration submenu"""
 
     while True:
         print_menu("inspiration")
 
         try:
             choose_inspiration = int(input("Please choose an option: "))
-            max_option = len(MENU_OPTIONS['inspiration']['options'])
+            max_option = len(MENU_OPTIONS["inspiration"]["options"])
             action_completed = False
 
             match choose_inspiration:
@@ -201,7 +201,7 @@ def inspiration_loop():
                     return
 
                 case _:
-                    print(f'{Fore.RED}Invalid choice.{Fore.RESET} \nPlease choose between options 1 - {max_option}. \n')
+                    print(f"{Fore.RED}Invalid choice.{Fore.RESET} \nPlease choose between options 1 - {max_option}. \n")
 
             if action_completed: # end menu cycle & action 1-4 done -- ask if user wants to repeat
                 if not ask_repeat("1. Get some inspiration to start your day"):

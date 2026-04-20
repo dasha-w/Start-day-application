@@ -9,8 +9,8 @@ from prettytable import PrettyTable, TableStyle
 
 from clothing_advice import display_clothing_advice
 from config import WEATHER_API_KEY
-from helpers import ask_repeat, parse_date, DEGREE_SYMBOL, SEPERATOR_BIG, SEPERATOR_SMALL, MENU_OPTIONS, print_menu
-
+from helpers import ask_repeat, parse_date, DEGREE_SYMBOL, SEPERATOR_BIG, SEPERATOR_SMALL, MENU_OPTIONS, print_menu, \
+    validate_input
 
 ## ================= VARIABLES =====================
 # Mapping for wind direction
@@ -86,11 +86,15 @@ def get_city()-> str | None:
     while True:
         city = input(f"{SEPERATOR_SMALL}\nEnter a city name to check the weather (q to quit search): ").strip()
 
+        if not city:
+            print("\nCity name cannot be empty. Please enter a city name: ")
+            continue
+
         if city.lower() == 'q':
             return None
 
-        if not city:
-            print("\nCity name cannot be empty. Please enter a city name: ")
+        if not validate_input(city, "city"):
+            print(f"\n{Fore.RED}Invalid character input.{Fore.RESET} Only letter, spaces, hyphens and apostrophes allowed.")
             continue
 
         return city
@@ -109,12 +113,14 @@ def check_city(weather_data: dict)-> bool:
 
         while True:
             correct_city = input(f'{SEPERATOR_SMALL}\nIs this the city you want to see the weather forecast for? (y/n): ').lower().strip()
+
+            if not validate_input(correct_city, "yn"):
+                print(f"\n{Fore.RED}Invalid input.{Fore.RESET} Please enter 'y' or 'n'.")
+
             if correct_city in ['yes', 'y']:
                 return True
             elif correct_city in ['n', 'no']:
                 return False
-            else:
-                print(f"\n{Fore.RED}Invalid input.{Fore.RESET} Please enter 'y' or 'n'.")
 
     except KeyError as e:
         print(f'{Fore.RED}Missing expected data:{Fore.RESET} {e}')
@@ -344,8 +350,8 @@ def weather_loop():
 
         try:
             choose_weather = int(input("Please choose an option: "))
+            # no validation function needed - if not a digit an error will occur due to int()
             max_options = len(MENU_OPTIONS['weather']['options'])
-
             action_completed = False
 
             match choose_weather:
