@@ -17,7 +17,7 @@ def search_advice(keyword: str)-> dict | None:
     :param keyword: the word to search for
     :return: dict | None: JSON data or None on failure
     """
-    url = f'https://api.adviceslip.com/advice/search/{keyword}'
+    url = f"https://api.adviceslip.com/advice/search/{keyword}"
 
     try:
         response = requests.get(url)
@@ -25,11 +25,11 @@ def search_advice(keyword: str)-> dict | None:
         if response.status_code == 200:
             return response.json()
         else:
-            print(f'{Fore.RED}Something went wrong.{Fore.RESET} Status code: {response.status_code}')
+            print(f"{Fore.RED}Something went wrong.{Fore.RESET} Status code: {response.status_code}")
             return None
 
     except requests.exceptions.RequestException as e:
-        print(f'{Fore.RED}Error {e}')
+        print(f"{Fore.RED}Error {e}")
         return None
 
 
@@ -39,19 +39,23 @@ def parse_api_advice_response(api_data: dict | None) -> dict:
        Normalize inconsistent API response of advice slip into standard format.
 
        :param api_data: raw JSON from API | None
-       :return: dict: {'found: bool, 'slips': list, 'error': str or None}
+       :return: dict: {"found": bool, "slips": list, "error": str | None}
        """
-    result = {'found': False, 'slips': [], 'error': None}
+    result = {"found": False, "slips": [], "error": None} # type: dict[str, bool | list | str | None]
 
     if api_data is None:
-        result['error'] = 'No data received from API'
+        result["error"] = "No data received from API"
 
-    if 'message' in api_data:
-        result['error'] = api_data['message']['text']
+    elif "message" in api_data:
+        result["error"] = api_data["message"]["text"]
 
-    if 'slips' in api_data:
-        result['found'] = True
-        result['slips'] = api_data['slips']
+    elif "slips" in api_data:
+        result["found"] = True
+        result["slips"] = api_data["slips"]
+
+    else:
+        print(f"Unexpected API response structure: {api_data}")
+        result["error"] = "Unexpected API response structure"
 
     return result
 
@@ -61,7 +65,7 @@ def display_number_results(count: int)-> None:
     """
     display the number of advice slips (results) found with the keyword
     """
-    print(f'\n> Found {count} advice slip(s). ')
+    print(f"\n> Found {count} advice slip(s). ")
 
 
 def choose_advice(total_count: int)-> int:
@@ -74,34 +78,34 @@ def choose_advice(total_count: int)-> int:
 
     while True:
         try:
-            choice = int(input(f'{SEPERATOR_SMALL}\n'
-                               f'Choose a number between 1 - {total_count} to display a found advice slip: '))
+            choice = int(input(f"{SEPERATOR_SMALL}\n"
+                               f"Choose a number between 1 - {total_count} to display a found advice slip: "))
 
             #Check if within range
             if 1 <= choice <= total_count:
                 return choice - 1 # convert to 0 index
             else:
-                print(f'\nPlease enter a number between 1 and {total_count}')
+                print(f"\nPlease enter a number between 1 and {total_count}")
 
         except ValueError:
-            print(f'\n{Fore.RED}Invalid input.{Fore.RESET} \nPlease enter a whole number.')
+            print(f"\n{Fore.RED}Invalid input.{Fore.RESET} \nPlease enter a whole number.")
 
 
 #--------------------- DISPLAY CHOSEN ADVICE  ----------------------
 def display_chosen_advice(data: list, index: int)-> None:
     """
     Display the specific advice slip from the chosen index
-    :param data (list): list of advice slips from parsed dictionary
-    :param index (int): Index number of slip to display
+    :param data: list of advice slips from parsed dictionary
+    :param index: Index number of slip to display
     """
     try:
-        advice = data[index]['advice']
-        print(f'\n{SEPERATOR_BIG}\n'
-              f'Your advice for today is:\n'
+        advice = data[index]["advice"]
+        print(f"\n{SEPERATOR_BIG}\n"
+              f"Your advice for today is:\n"
               f'{SEPERATOR_SMALL}\n"{advice}"')
 
     except (KeyError, TypeError) as e:
-        print(f'Unexpected response format. {Fore.RED}Error: {e}')
+        print(f"Unexpected response format. {Fore.RED}Error: {e}")
 
 
 def browse_slips(slips: list) -> None:
@@ -131,9 +135,9 @@ def browse_slips(slips: list) -> None:
             if not validate_input(again, "yn"): # validates input to only y/n
                 print("\n{Fore.RED}Invalid input.{Fore.RESET} Please enter 'y' or 'n'.")
 
-            if again in ['y', 'yes']:
+            if again in ["y", "yes"]:
                 break # breaks again while loop and goes back to choose_advice
-            elif again in ['n', 'no']:
+            elif again in ["n", "no"]:
                 return # ends function
 
 
@@ -148,7 +152,7 @@ def run_advice_search() -> bool:
     """
 
     print(f"\n===== SEARCH for ADVICE =====\n")
-    keyword = input(f"You are about to search for advice based on a keyword (e.g. 'life', 'happiness').\n{SEPERATOR_SMALL}\n"
+    keyword = input(f'You are about to search for advice based on a keyword (e.g. "life", "happiness").\n{SEPERATOR_SMALL}\n'
                     "What keyword do you want to search for? (q to quit search): ").lower()
 
     if not keyword:
@@ -156,10 +160,11 @@ def run_advice_search() -> bool:
         return False
 
     if not validate_input(keyword, "advice_search"):
-        print(f"\n{Fore.RED}Invalid input.{Fore.RESET} Please only enter letters, digits, a space, '-', or apostrophe.")
+        print(f'\n{Fore.RED}Invalid character input.{Fore.RESET} '
+              f'Please only enter letters, digits, a space, hyphen, or apostrophe.')
         return False
 
-    if keyword == 'q':
+    if keyword == "q":
         return True
 
     # get api data
@@ -169,12 +174,12 @@ def run_advice_search() -> bool:
     parsed = parse_api_advice_response(api_data)
 
     # If no advice found with keyword
-    if not parsed['found']:  # if not False = True | If not True = False
-        print(f'\n{Fore.RED}No advice found:{Fore.RESET} {parsed['error']}\n')
+    if not parsed["found"]:  # if not False --> True | If not True --> False
+        print(f"\n{Fore.RED}No advice found:{Fore.RESET} {parsed["error"]}\n")
         return False
 
     # if there is advice found for the keyword
-    slips = parsed['slips']
+    slips = parsed["slips"]
 
     # display number of slips found
     display_number_results(len(slips))

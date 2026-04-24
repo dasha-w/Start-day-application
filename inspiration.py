@@ -2,6 +2,7 @@
 Module for fetching and displaying inspirational content (joke, quote, advice).
 External API: JokeFather, ZenQuotes, AdviceSlip
 """
+import time
 
 import requests
 from colorama import Fore, Style
@@ -19,23 +20,20 @@ def fall_back(categorie: str) -> None:
     :param
         categorie (str): quote, advice, or joke
     """
-    fall_back_advice = '"Every journey begins with a single step."'
-    fall_back_quote = (
-        '"I learned that courage was not the absence of fear, but the triumph over it. '
-        'The brave man is not he who does not feel afraid, but he who conquers that fear."\n'
-        "- Nelson Mandela"
-    )
-    fall_back_joke = "What's a computer's favorite snack?\n\nMicrochips"
+    fallback = {
+        "advice": '"Every journey begins with a single step."',
+        "quote": (
+            '"I learned that courage was not the absence of fear, but the triumph over it. '
+            'The brave man is not he who does not feel afraid, but he who conquers that fear."\n'
+            "- Nelson Mandela"
+            ),
+        "joke": "What's a computer's favorite snack?\n\nMicrochips"
+    }
 
-    if categorie == "advice":
-        print_text = fall_back_advice
-    if categorie == "quote":
-        print_text = fall_back_quote
-    if categorie == "joke":
-        print_text = fall_back_joke
+    print_text = fallback.get(categorie)
 
     print(f"{SEPERATOR_BIG}\n"
-          f"Printing fallback {categorie}.\n"
+          f"Printing fallback {categorie}\n"
           f"Your {categorie} for today is:\n"
           f"{SEPERATOR_SMALL}\n"
           f"{print_text}")
@@ -49,21 +47,18 @@ def get_api_data(categorie: str) -> dict | None:
     :return:
         dict | None: JSON response or None on failure.
     """
+    urls = {
+        "advice": "https://api.adviceslip.com/advice",
+        "quote": "https://zenquotes.io/api/random",
+        "joke": "https://jokefather.com/api/jokes/random"
+    }
 
-    url_advice = "https://api.adviceslip.com/advice"
-    url_quote = "https://zenquotes.io/api/random"
-    url_joke = "https://jokefather.com/api/jokes/random"
+    url = urls.get(categorie)
 
-    match categorie:
-        case "advice":
-            url = url_advice
-        case "quote":
-            url = url_quote
-        case "joke":
-            url = url_joke
-        case _:
-            print(f"{Fore.RED}Incorrect categorie parameter.{Fore.RESET} "
-                  f"Categorie needs to be 'advice', 'quote', or 'joke'.")
+    if url is None:
+        print(f"{Fore.RED}Incorrect categorie parameter.{Fore.RESET} "
+              f"Categorie needs to be 'advice', 'quote', or 'joke'.")
+        return None  # exit before url is used
 
     try:
         response = requests.get(url)
@@ -89,7 +84,7 @@ def display_joke(joke_data: dict | None) -> None:
     :param joke_data: dict | None: JSON data from API
     """
 
-    if joke_data is None: #try api failed or statuscode != 200
+    if joke_data is None: # no url specified, try api failed, or statuscode != 200
         print(f"Unable to fetch new quote at this time.")
         fall_back("joke")
         return
@@ -100,9 +95,9 @@ def display_joke(joke_data: dict | None) -> None:
         print(f"{SEPERATOR_BIG}\n"
               f"Your joke for today is:\n"
               f"{SEPERATOR_SMALL}\n"
-              f"{setup}\n"
-              f"\n"
-              f"{punchline}")
+              f"{setup}\n")
+        time.sleep(2.5)
+        print(f"{punchline}")
 
     except (KeyError, TypeError) as e:
         print(f"Unexpected response format. Error: {e}")
@@ -201,7 +196,7 @@ def inspiration_loop():
                     return
 
                 case _:
-                    print(f"{Fore.RED}Invalid choice.{Fore.RESET} \nPlease choose between options 1 - {max_option}. \n")
+                    print(f"{Fore.RED}Invalid choice.{Fore.RESET} Please choose between options 1 - {max_option}. \n")
 
             if action_completed: # end menu cycle & action 1-4 done -- ask if user wants to repeat
                 if not ask_repeat("1. Get some inspiration to start your day"):

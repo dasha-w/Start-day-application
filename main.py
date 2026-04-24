@@ -2,6 +2,18 @@ import sys
 from colorama import init, Fore, Style
 from helpers import SEPERATOR_BIG, SEPERATOR_SMALL, print_menu, MENU_OPTIONS
 from inspiration import inspiration_loop
+
+try:
+    from config import WEATHER_API_KEY
+
+    if not WEATHER_API_KEY:
+        print(f"{Fore.RED}Error:{Fore.RESET} WEATHER_API_KEY is empty in config.py")
+        sys.exit(1)
+except (ImportError, ValueError) as e:
+    print(f"{Fore.RED}Setup error:{Fore.RESET} {e}.")
+    print(f"Please create config.py and add your API Key. See README.md")
+    sys.exit(1)
+
 from weather import weather_loop
 
 init(autoreset=True) # colorama initialisation. autoreset - resets style and colors at end of each print
@@ -42,7 +54,7 @@ def main():
                 exit_application()
 
             else:
-                print(f"{Fore.RED}Invalid choice.{Fore.RESET} \nPlease choose between options 1 - {max_option}. \n")
+                print(f"{Fore.RED}Invalid choice.{Fore.RESET} Please choose between options 1 - {max_option}. \n")
 
         except ValueError as e:
             print(f"{Fore.RED}Invalid input{Fore.RESET} -- Error: {e}\n \n{Style.BRIGHT}Please enter a digit.\n")

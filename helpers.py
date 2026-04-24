@@ -65,7 +65,6 @@ def ask_repeat(prompt: str = "") -> bool:
             return False
 
 
-
 def parse_date(date: str) -> str:
     """
     Parse an ISO format date string to another format -> e.g. Monday 1 January 2020
@@ -120,9 +119,9 @@ def validate_input(input_string, pattern_type = "alphanumeric"):
 
     patterns = {
         "alphanumeric": r"^[a-zA-Z0-9]+$",
-        "advice_search": r"^[a-zA-Z0-9\s\-']", # letters, digits, space, - and '
+        "advice_search": r"^[a-zA-Z0-9\s\-']+$", # letters, digits, space, - and '
         "city": r"^[a-zA-Z\s\-']+$", #letters, space, - and '
-        "yn": r"^[y|yes|n|no]$" # for yes/no input options
+        "yn": r"^(y|n|yes|no)$" # for yes/no input options
     }
 
     if not input_string:

@@ -52,7 +52,7 @@ Run the main script
 - ```search_advice.py```: Specific logic for keyword-based advice searching  
 - ```helpers.py```: Utility functions (date parsing, input validation, constants)  
 - ```config.py```: Stores API keys (do not commit to public repos!)  
-- ```requirements.txt```: Python dependencies  
+- ```requirements.txt```: Python dependencies
 
 ## Dependencies 
 
