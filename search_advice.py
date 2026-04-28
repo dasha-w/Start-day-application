@@ -141,6 +141,7 @@ def browse_slips(slips: list) -> None:
                 return # ends function
 
 
+
 #--------------------- RUN ADVICE SEARCH  ----------------------
 def run_advice_search() -> bool:
     """
