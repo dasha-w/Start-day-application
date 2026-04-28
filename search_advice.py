@@ -133,7 +133,7 @@ def browse_slips(slips: list) -> None:
             ).lower().strip()
 
             if not validate_input(again, "yn"): # validates input to only y/n
-                print("\n{Fore.RED}Invalid input.{Fore.RESET} Please enter 'y' or 'n'.")
+                print(f"\n{Fore.RED}Invalid input.{Fore.RESET} Please enter 'y' or 'n'.")
 
             if again in ["y", "yes"]:
                 break # breaks again while loop and goes back to choose_advice
