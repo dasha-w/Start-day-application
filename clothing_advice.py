@@ -7,7 +7,7 @@ from collections import Counter
 
 from colorama import Fore, Style
 
-from helpers import parse_date, DEGREE_SYMBOL, SEPERATOR_SMALL
+from helpers import parse_date, DEGREE_SYMBOL, SEPARATOR_SMALL
 
 #========= VARIABLES ============
 KEY_FILTERS_CLOTHING_WEATHER = ["temp_c", "condition", "wind_kph", "precip_mm", "feelslike_c", "will_it_rain",
@@ -182,7 +182,7 @@ def print_clothing_advice(location:str, date:str, descriptives:dict, advice:dict
 
     print(f"\n{Fore.BLUE}This clothing advice is based on the forecast for {location} on {date} "
           f"between 8am and 8pm:\n{Fore.RESET}"
-          f"{SEPERATOR_SMALL} ")
+          f"{SEPARATOR_SMALL} ")
     # advice temp
     print(f"The average {Fore.BLUE}temperature{Fore.RESET} will {Style.BRIGHT}feel like{Style.RESET_ALL} "
           f"{descriptives["feel_avg_temp"]}{DEGREE_SYMBOL}C")

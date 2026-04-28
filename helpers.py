@@ -9,8 +9,8 @@ from colorama import Fore, Style
 
 # Constants for terminal formatting
 DEGREE_SYMBOL = chr(176)
-SEPERATOR_BIG = ('='*80)
-SEPERATOR_SMALL = ('-'*80)
+SEPARATOR_BIG = ('=' * 80)
+SEPARATOR_SMALL = ('-' * 80)
 
 MENU_OPTIONS = {
     "main": {
@@ -100,7 +100,7 @@ def print_menu(menu_name: str):
     color = menu_data['color']
     options = menu_data['options']
 
-    print(f"{SEPERATOR_BIG}\nWhat would you like to do?\n{SEPERATOR_SMALL}")
+    print(f"{SEPARATOR_BIG}\nWhat would you like to do?\n{SEPARATOR_SMALL}")
 
     # loop through menu options and print with numbering and specific color
     for i, option in enumerate(options,1):

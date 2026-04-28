@@ -6,7 +6,7 @@ Handles search logic, parsing, and user interaction for browsing results.
 import requests
 from colorama import Fore, Style
 
-from helpers import ask_repeat, SEPERATOR_BIG, SEPERATOR_SMALL, validate_input
+from helpers import ask_repeat, SEPARATOR_BIG, SEPARATOR_SMALL, validate_input
 
 
 #--------------------- SEARCH ADVICE ----------------------
@@ -78,7 +78,7 @@ def choose_advice(total_count: int)-> int:
 
     while True:
         try:
-            choice = int(input(f"{SEPERATOR_SMALL}\n"
+            choice = int(input(f"{SEPARATOR_SMALL}\n"
                                f"Choose a number between 1 - {total_count} to display a found advice slip: "))
 
             #Check if within range
@@ -100,9 +100,9 @@ def display_chosen_advice(data: list, index: int)-> None:
     """
     try:
         advice = data[index]["advice"]
-        print(f"\n{SEPERATOR_BIG}\n"
+        print(f"\n{SEPARATOR_BIG}\n"
               f"Your advice for today is:\n"
-              f'{SEPERATOR_SMALL}\n"{advice}"')
+              f'{SEPARATOR_SMALL}\n"{advice}"')
 
     except (KeyError, TypeError) as e:
         print(f"Unexpected response format. {Fore.RED}Error: {e}")
@@ -153,11 +153,11 @@ def run_advice_search() -> bool:
     """
 
     print(f"\n===== SEARCH for ADVICE =====\n")
-    keyword = input(f'You are about to search for advice based on a keyword (e.g. "life", "happiness").\n{SEPERATOR_SMALL}\n'
+    keyword = input(f'You are about to search for advice based on a keyword (e.g. "life", "happiness").\n{SEPARATOR_SMALL}\n'
                     "What keyword do you want to search for? (q to quit search): ").lower()
 
     if not keyword:
-        print(f"\n{Fore.RED}Keyword cannot be empty.{Fore.RESET}\n{SEPERATOR_SMALL}")
+        print(f"\n{Fore.RED}Keyword cannot be empty.{Fore.RESET}\n{SEPARATOR_SMALL}")
         return False
 
     if not validate_input(keyword, "advice_search"):

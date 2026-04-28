@@ -7,7 +7,7 @@ import time
 import requests
 from colorama import Fore, Style
 
-from helpers import ask_repeat, SEPERATOR_BIG, SEPERATOR_SMALL, MENU_OPTIONS, print_menu
+from helpers import ask_repeat, SEPARATOR_BIG, SEPARATOR_SMALL, MENU_OPTIONS, print_menu
 from search_advice import advice_search_loop
 
 
@@ -32,10 +32,10 @@ def fall_back(categorie: str) -> None:
 
     print_text = fallback.get(categorie)
 
-    print(f"{SEPERATOR_BIG}\n"
+    print(f"{SEPARATOR_BIG}\n"
           f"Printing fallback {categorie}\n"
           f"Your {categorie} for today is:\n"
-          f"{SEPERATOR_SMALL}\n"
+          f"{SEPARATOR_SMALL}\n"
           f"{print_text}")
 
 
@@ -92,9 +92,9 @@ def display_joke(joke_data: dict | None) -> None:
     try:
         setup = joke_data["setup"]
         punchline = joke_data["punchline"]
-        print(f"{SEPERATOR_BIG}\n"
+        print(f"{SEPARATOR_BIG}\n"
               f"Your joke for today is:\n"
-              f"{SEPERATOR_SMALL}\n"
+              f"{SEPARATOR_SMALL}\n"
               f"{setup}\n")
         time.sleep(2.5)
         print(f"{punchline}")
@@ -122,9 +122,9 @@ def display_quote(quote_data: list | None) -> None:
     try:
         quote_str = quote_data[0]["q"]
         author = quote_data[0]["a"]
-        print(f"{SEPERATOR_BIG}\n"
+        print(f"{SEPARATOR_BIG}\n"
               f"Your quote for today is:\n"
-              f"{SEPERATOR_SMALL}\n"
+              f"{SEPARATOR_SMALL}\n"
               f'"{quote_str}"\n'
               f"- {author}")
 
@@ -150,9 +150,9 @@ def display_advice(advice_data: dict | None) -> None:
 
     try:
         new_advice = advice_data["slip"]["advice"]
-        print(f"{SEPERATOR_BIG}\n"
+        print(f"{SEPARATOR_BIG}\n"
               f"Your advice for today is:\n"
-              f"{SEPERATOR_SMALL}\n"
+              f"{SEPARATOR_SMALL}\n"
               f'"{new_advice}"')
 
     except (KeyError, TypeError) as e:

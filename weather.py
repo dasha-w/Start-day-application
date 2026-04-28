@@ -10,7 +10,7 @@ import datetime as dt
 
 from clothing_advice import display_clothing_advice
 from config import WEATHER_API_KEY
-from helpers import ask_repeat, parse_date, DEGREE_SYMBOL, SEPERATOR_SMALL, MENU_OPTIONS, print_menu, \
+from helpers import ask_repeat, parse_date, DEGREE_SYMBOL, SEPARATOR_SMALL, MENU_OPTIONS, print_menu, \
     validate_input
 
 ## ================= VARIABLES =====================
@@ -87,7 +87,7 @@ def get_city()-> str | None:
     :return: string or None
     """
     while True:
-        city = input(f"{SEPERATOR_SMALL}\nEnter a city name to check the weather (q to quit search): ").strip()
+        city = input(f"{SEPARATOR_SMALL}\nEnter a city name to check the weather (q to quit search): ").strip()
 
         if not city:
             print("\nCity name cannot be empty. Please enter a city name: ")
@@ -116,7 +116,7 @@ def check_city(weather_data: dict)-> bool:
         print(f"\n{Style.BRIGHT}Found {location["name"]} in region: {location["region"]} and country: {location["country"]}")
 
         while True:
-            correct_city = input(f"{SEPERATOR_SMALL}\nIs this the city you want to see the weather forecast for? (y/n): ").lower().strip()
+            correct_city = input(f"{SEPARATOR_SMALL}\nIs this the city you want to see the weather forecast for? (y/n): ").lower().strip()
 
             if not validate_input(correct_city, "yn"):
                 print(f"\n{Fore.RED}Invalid input.{Fore.RESET} Please enter 'y' or 'n'.")
